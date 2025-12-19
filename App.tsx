@@ -4,7 +4,7 @@ import {
   Settings, Moon, Sun, X, Save, MoreVertical, 
   ArrowRightLeft, Trash2, Terminal, Github, 
   CornerDownRight, Search, LayoutGrid, File, Edit3, Move, Eye, EyeOff, AlertTriangle,
-  Download, Upload, Cpu, Activity, HardDrive, Clock, Zap, Layers, Monitor
+  Download, Upload, Cpu, Activity, HardDrive, Clock, Zap, Layers, Monitor, GitBranch, Command
 } from 'lucide-react';
 
 // --- UTILS & DATA ---
@@ -37,56 +37,59 @@ const initialRootNotes = [
 
 // --- SUB-COMPONENTS ---
 
-const SystemStatus = ({ isTerminal, totalFolders, totalNotes, currentView }) => (
-  <div className={`w-full flex items-center justify-between py-2 px-4 text-[10px] font-mono border-b ${isTerminal ? 'bg-black/20 border-[#30363d] text-[#8b949e]' : 'bg-gray-100 border-gray-200 text-gray-500'}`}>
-    <div className="flex gap-4">
-      <span className="flex items-center gap-1"><Cpu size={10}/> CPU: 12%</span>
-      <span className="flex items-center gap-1"><Activity size={10}/> MEM: 240MB</span>
+const SystemStatus = ({ isTerminal, viewMode }) => (
+  <div className={`w-full flex items-center justify-between py-1 px-3 text-[9px] font-mono border-b ${isTerminal ? 'bg-[#0d1117] border-[#30363d] text-[#8b949e]' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
+    <div className="flex gap-3">
+      <span className="flex items-center gap-1"><Terminal size={10}/> bash --login</span>
+      <span className="flex items-center gap-1 opacity-50"><Cpu size={10}/> 12%</span>
     </div>
-    <div className="flex gap-4 items-center">
-       <span className="uppercase tracking-widest opacity-50 mr-2">MODE: {currentView}</span>
+    <div className="flex gap-3 items-center">
+       <span className="uppercase tracking-widest opacity-50">VIEW: {viewMode}</span>
+       <span className="flex items-center gap-1 text-[#3fb950]"><GitBranch size={10}/> main</span>
        <span className="flex items-center gap-1"><Clock size={10}/> {getFormattedTime()}</span>
     </div>
   </div>
 );
 
-const StatsCard = ({ icon: Icon, label, value, isTerminal, colorClass, onClick, isActive }) => (
-  <div 
+// REFACTORED: Compact Stats Button (GitHub Style)
+const StatsButton = ({ icon: Icon, label, value, isTerminal, colorClass, onClick, isActive }) => (
+  <button 
     onClick={onClick}
     className={`
-      flex-1 p-3 rounded-lg border flex items-center gap-3 cursor-pointer select-none
-      transition-all duration-300 hover:scale-[1.02] active:scale-95
+      flex items-center gap-2 px-3 py-1.5 rounded-md border text-[11px] font-mono transition-all select-none
       ${isActive 
-        ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] shadow-[0_0_15px_rgba(63,185,80,0.2)]' : 'bg-blue-50 border-blue-400 shadow-md') 
-        : (isTerminal ? 'bg-[#161b22] border-[#30363d] opacity-70 hover:opacity-100' : 'bg-white border-gray-200 shadow-sm hover:border-blue-300')
+        ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') 
+        : (isTerminal ? 'bg-[#161b22] border-[#30363d] text-[#8b949e] hover:border-[#8b949e] hover:text-[#c9d1d9]' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700')
       }
     `}
   >
-     <div className={`p-2 rounded-md ${isTerminal ? 'bg-opacity-10 bg-white' : 'bg-opacity-10 bg-black'} ${colorClass} transition-colors`}>
-        <Icon size={18} />
+     <div className={`flex items-center gap-1.5 ${isActive ? colorClass : ''}`}>
+        <Icon size={14} />
+        <span className="font-bold tracking-tight">{label}</span>
      </div>
-     <div>
-        <div className={`text-[10px] uppercase tracking-wider font-bold opacity-60 ${isTerminal ? 'text-[#8b949e]' : 'text-gray-500'}`}>{label}</div>
-        <div className={`text-lg font-bold ${isTerminal ? 'text-[#e6edf3]' : 'text-gray-800'}`}>{value}</div>
-     </div>
-  </div>
+     {value !== undefined && (
+       <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${isTerminal ? 'bg-[#30363d] text-[#c9d1d9]' : 'bg-gray-100 text-gray-600'}`}>
+          {value}
+       </span>
+     )}
+  </button>
 );
 
 const ActionButtons = ({ onMove, onDelete, colorClass }) => (
   <div className="flex items-center gap-1 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
-    <button onClick={onMove} className={`p-1.5 rounded hover:bg-current hover:bg-opacity-10 ${colorClass} opacity-60 hover:opacity-100 transition-opacity`}>
-      <Move size={14} />
+    <button onClick={onMove} className={`p-1 rounded hover:bg-current hover:bg-opacity-10 ${colorClass} opacity-60 hover:opacity-100 transition-opacity`}>
+      <Move size={12} />
     </button>
-    <button onClick={onDelete} className={`p-1.5 rounded hover:bg-red-500/10 text-red-500 opacity-60 hover:opacity-100 transition-opacity`}>
-      <Trash2 size={14} />
+    <button onClick={onDelete} className={`p-1 rounded hover:bg-red-500/10 text-red-500 opacity-60 hover:opacity-100 transition-opacity`}>
+      <Trash2 size={12} />
     </button>
   </div>
 );
 
 const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek }) => {
   const cardClass = isTerminal 
-    ? 'bg-[#0d1117] border border-[#30363d] shadow-[0_4px_0_rgba(48,54,61,0.5)]' 
-    : 'bg-white border border-[#d0d7de] shadow-sm';
+    ? 'bg-[#0d1117] border border-[#30363d] hover:border-[#8b949e]' 
+    : 'bg-white border border-[#d0d7de] hover:border-blue-300 shadow-sm';
   
   const getPeekContent = (text) => {
     if (!text) return "Empty...";
@@ -95,11 +98,11 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
   };
 
   return (
-    <div className={`relative flex flex-col ${cardClass} h-auto overflow-hidden group w-full rounded-lg transition-all duration-500 hover:-translate-y-1 hover:shadow-lg animate-in fade-in slide-in-from-bottom-2`}>
-       <div className={`flex justify-between items-start p-3 ${isTerminal ? 'bg-[#161b22]/50' : 'bg-gray-50/80'} border-b ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50`}>
+    <div className={`relative flex flex-col ${cardClass} h-auto overflow-hidden group w-full rounded-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2`}>
+       <div className={`flex justify-between items-center p-2 px-3 ${isTerminal ? 'bg-[#161b22]' : 'bg-gray-50'} border-b ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50`}>
           <div className="flex items-center gap-2 overflow-hidden">
-             <FileText size={16} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-500'} />
-             <span className="font-bold text-sm truncate">{note.title}</span>
+             <FileText size={14} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-500'} />
+             <span className="font-bold text-xs truncate font-mono">{note.title}</span>
           </div>
           <ActionButtons 
             onMove={(e) => { e.stopPropagation(); onMove(); }}
@@ -108,10 +111,10 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
           />
        </div>
        <div 
-         className="p-3 cursor-pointer min-h-[60px] flex-1 hover:bg-current hover:bg-opacity-5 transition-colors"
+         className="p-3 cursor-pointer min-h-[50px] flex-1 hover:bg-current hover:bg-opacity-5 transition-colors"
          onClick={onOpen}
        >
-          <div className={`text-xs leading-relaxed font-mono ${isTerminal ? 'text-[#8b949e]' : 'text-gray-600'}`}>
+          <div className={`text-[11px] leading-relaxed font-mono ${isTerminal ? 'text-[#8b949e]' : 'text-gray-600'}`}>
             {note.isPeeked 
               ? (
                   <div className="animate-in slide-in-from-top-2 fade-in duration-300">
@@ -120,7 +123,7 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
                 )
               : (
                   <div className="line-clamp-3 opacity-70">
-                     {note.content || <span className="italic">No content (Edit)</span>}
+                     {note.content || <span className="italic opacity-50">// No content...</span>}
                   </div>
                 )
             }
@@ -128,10 +131,9 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
        </div>
        <button 
          onClick={(e) => { e.stopPropagation(); onPeek(); }}
-         className={`w-full py-2 flex items-center justify-center border-t ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50 text-[10px] font-bold uppercase tracking-wider hover:bg-current hover:bg-opacity-10 transition-colors opacity-70 hover:opacity-100`}
+         className={`w-full py-1.5 flex items-center justify-center border-t ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50 text-[9px] font-bold uppercase tracking-wider hover:bg-current hover:bg-opacity-10 transition-colors opacity-60 hover:opacity-100`}
        >
-          {note.isPeeked ? <EyeOff size={14} className="mr-1"/> : <Eye size={14} className="mr-1"/>}
-          {note.isPeeked ? 'CLOSE PEEK' : 'PEEK'}
+          {note.isPeeked ? 'CLOSE_PEEK' : 'PEEK_CONTENT'}
        </button>
     </div>
   );
@@ -139,8 +141,8 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
 
 const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDeleteNote, onOpenNote, onPeekNote, onAddNote }) => {
   const cardClass = isTerminal 
-    ? 'bg-[#0d1117] border border-[#30363d] shadow-[0_4px_0_rgba(48,54,61,0.5)]' 
-    : 'bg-white border border-[#d0d7de] shadow-sm';
+    ? 'bg-[#0d1117] border border-[#30363d] hover:border-[#8b949e]' 
+    : 'bg-white border border-[#d0d7de] hover:border-blue-300 shadow-sm';
 
   const getPeekContent = (text) => {
     if (!text) return "Empty...";
@@ -149,20 +151,20 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
   };
 
   return (
-    <div className={`relative flex flex-col ${cardClass} w-full rounded-lg transition-all duration-300 hover:shadow-lg animate-in fade-in slide-in-from-bottom-2`}>
+    <div className={`relative flex flex-col ${cardClass} w-full rounded-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2`}>
       <div 
-        className={`p-3 flex items-center justify-between cursor-pointer ${folder.isExpanded ? (isTerminal ? 'border-b border-[#30363d]' : 'border-b border-[#d0d7de]') : ''}`}
+        className={`p-2 px-3 flex items-center justify-between cursor-pointer ${folder.isExpanded ? (isTerminal ? 'border-b border-[#30363d]' : 'border-b border-[#d0d7de]') : ''}`}
         onClick={onToggle}
       >
         <div className="flex items-center gap-2 overflow-hidden">
-           <Folder size={18} className={isTerminal ? 'text-[#3fb950]' : 'text-yellow-500'} />
-           <div className="flex flex-col overflow-hidden">
-             <span className="font-bold text-sm truncate">{folder.name}</span>
-             {!folder.isExpanded && <span className="text-[10px] opacity-50 font-mono">{folder.notes.length} items</span>}
+           <Folder size={16} className={isTerminal ? 'text-[#3fb950]' : 'text-yellow-500'} />
+           <div className="flex items-center gap-2 overflow-hidden">
+             <span className="font-bold text-xs truncate font-mono">{folder.name}</span>
+             {!folder.isExpanded && <span className="text-[9px] opacity-50 font-mono px-1.5 py-0.5 rounded bg-current bg-opacity-10">{folder.notes.length}</span>}
            </div>
         </div>
         <div className="flex items-center">
-            {folder.isExpanded ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
+            {folder.isExpanded ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
             <button onClick={(e) => {e.stopPropagation(); onDelete();}} className="ml-2 p-1 hover:text-red-500 opacity-30 hover:opacity-100 transition-opacity">
                 <Trash2 size={12}/>
             </button>
@@ -171,16 +173,16 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
 
       {folder.isExpanded && (
         <div className="p-2 space-y-2 animate-in slide-in-from-top-4 fade-in duration-300 ease-out origin-top">
-            {folder.notes.length === 0 ? <div className="text-center opacity-30 text-[10px] py-2 font-mono">Empty Folder</div> : 
+            {folder.notes.length === 0 ? <div className="text-center opacity-30 text-[10px] py-1 font-mono">// Empty Folder</div> : 
             folder.notes.map(note => (
-               <div key={note.id} className={`flex flex-col ${isTerminal ? 'bg-[#161b22] border border-[#30363d]' : 'bg-gray-50 border border-gray-100'} rounded overflow-hidden transition-transform active:scale-[0.99]`}>
-                 <div className="flex items-center justify-between p-2 pl-3 border-b border-transparent hover:border-current hover:border-opacity-10">
+               <div key={note.id} className={`flex flex-col ${isTerminal ? 'bg-[#161b22] border border-[#30363d]' : 'bg-gray-50 border border-gray-100'} rounded-sm overflow-hidden transition-transform active:scale-[0.99]`}>
+                 <div className="flex items-center justify-between p-1.5 pl-3 border-b border-transparent hover:border-current hover:border-opacity-10">
                     <div className="flex-1 cursor-pointer overflow-hidden" onClick={() => onOpenNote(note)}>
-                       <span className="text-xs font-bold truncate block hover:underline">{note.title}</span>
+                       <span className="text-[11px] font-bold truncate block hover:underline font-mono">{note.title}</span>
                     </div>
-                    <div className="flex gap-2 pl-2">
-                      <button onClick={() => onMoveNote(note.id)} className="hover:text-yellow-500 opacity-60 hover:opacity-100"><Move size={12}/></button>
-                      <button onClick={() => onDeleteNote(note.id)} className="hover:text-red-500 opacity-60 hover:opacity-100"><Trash2 size={12}/></button>
+                    <div className="flex gap-1 pl-2">
+                      <button onClick={() => onMoveNote(note.id)} className="hover:text-yellow-500 opacity-60 hover:opacity-100 p-1"><Move size={10}/></button>
+                      <button onClick={() => onDeleteNote(note.id)} className="hover:text-red-500 opacity-60 hover:opacity-100 p-1"><Trash2 size={10}/></button>
                     </div>
                  </div>
                  {note.isPeeked && (
@@ -188,16 +190,16 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
                      {getPeekContent(note.content)}
                    </div>
                  )}
-                 <button onClick={() => onPeekNote(note.id)} className="w-full py-1 bg-black/5 hover:bg-black/10 text-[9px] text-center opacity-50 uppercase tracking-widest hover:opacity-100 transition-opacity">
-                   {note.isPeeked ? 'Close' : 'Preview'}
+                 <button onClick={() => onPeekNote(note.id)} className="w-full py-0.5 bg-black/5 hover:bg-black/10 text-[8px] text-center opacity-40 uppercase tracking-widest hover:opacity-100 transition-opacity">
+                   {note.isPeeked ? 'Collapse' : 'Preview'}
                  </button>
                </div>
             ))}
             <button 
                 onClick={onAddNote}
-                className="w-full py-2 text-[10px] text-center opacity-50 hover:opacity-100 border border-dashed border-current rounded flex justify-center items-center gap-1 hover:bg-current hover:bg-opacity-5 transition-all"
+                className="w-full py-1.5 text-[10px] text-center opacity-50 hover:opacity-100 border border-dashed border-current rounded flex justify-center items-center gap-1 hover:bg-current hover:bg-opacity-5 transition-all font-mono"
             >
-                <Plus size={10}/> Add File
+                <Plus size={10}/> Add_File
             </button>
         </div>
       )}
@@ -209,20 +211,20 @@ const EditorModal = ({ note, isTerminal, onClose, onSave }) => {
   if (!note) return null;
   return (
     <div className={`fixed inset-0 z-[100] flex flex-col ${isTerminal ? 'bg-[#0d1117] text-[#e6edf3]' : 'bg-white text-[#24292f]'} font-mono animate-in slide-in-from-bottom-10 fade-in duration-300`}>
-      <div className={`flex justify-between items-center p-4 border-b ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'}`}>
+      <div className={`flex justify-between items-center p-3 px-4 border-b ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'}`}>
         <div className="flex items-center gap-3 overflow-hidden">
-            <FileText size={20} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-600'} /> 
-            <span className="font-bold text-lg truncate">{note.title}</span>
+            <FileText size={18} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-600'} /> 
+            <span className="font-bold text-sm truncate">{note.title}</span>
         </div>
-        <button onClick={onClose} className={`px-4 py-2 text-sm font-bold border rounded flex items-center gap-2 ${isTerminal ? 'border-[#30363d] hover:bg-[#21262d]' : 'border-[#d0d7de] hover:bg-[#f3f4f6]'} transition-colors`}>
-            <Save size={16} /> DONE
+        <button onClick={onClose} className={`px-3 py-1.5 text-xs font-bold border rounded flex items-center gap-2 ${isTerminal ? 'border-[#30363d] hover:bg-[#21262d]' : 'border-[#d0d7de] hover:bg-[#f3f4f6]'} transition-colors`}>
+            <Save size={14} /> SAVE & CLOSE
         </button>
       </div>
       <textarea 
         value={note.content}
         onChange={(e) => onSave(e.target.value)}
-        className={`flex-1 w-full p-6 bg-transparent outline-none resize-none leading-relaxed text-base custom-scrollbar`}
-        placeholder={isTerminal ? "// Start typing..." : "Start writing..."}
+        className={`flex-1 w-full p-4 md:p-8 bg-transparent outline-none resize-none leading-relaxed text-sm custom-scrollbar`}
+        placeholder={isTerminal ? "// Start typing your content here..." : "Start writing..."}
         spellCheck={false}
       />
     </div>
@@ -233,17 +235,17 @@ const DeleteConfirmModal = ({ isOpen, type, onConfirm, onCancel, isTerminal }) =
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200">
-        <div className={`w-full max-w-sm p-6 ${isTerminal ? 'bg-[#161b22] border border-[#30363d] text-[#e6edf3]' : 'bg-white border border-gray-200 text-gray-800'} rounded-lg flex flex-col gap-4 text-center items-center shadow-2xl scale-100`}>
+        <div className={`w-full max-w-sm p-6 ${isTerminal ? 'bg-[#161b22] border border-[#30363d] text-[#e6edf3]' : 'bg-white border border-gray-200 text-gray-800'} rounded-lg flex flex-col gap-4 text-center items-center shadow-2xl scale-100 font-mono`}>
           <div className="p-3 bg-red-500/10 rounded-full text-red-500 mb-2">
              <AlertTriangle size={32} />
           </div>
-          <h3 className="font-bold text-xl">DELETE {type}?</h3>
-          <p className="opacity-70 text-sm">Action cannot be undone. Are you sure?</p>
+          <h3 className="font-bold text-xl">CONFIRM DELETION</h3>
+          <p className="opacity-70 text-xs">Target: {type}. This action is irreversible.</p>
           <div className="flex gap-2 w-full mt-4">
-              <button onClick={onConfirm} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded uppercase tracking-wider transition-colors shadow-lg hover:shadow-red-900/20">
-                DELETE
+              <button onClick={onConfirm} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded uppercase tracking-wider transition-colors shadow-lg">
+                DELETE PERMANENTLY
               </button>
-              <button onClick={onCancel} className="flex-1 py-3 border border-current opacity-60 hover:opacity-100 font-bold rounded uppercase tracking-wider transition-opacity">
+              <button onClick={onCancel} className="flex-1 py-2 border border-current opacity-60 hover:opacity-100 text-xs font-bold rounded uppercase tracking-wider transition-opacity">
                 CANCEL
               </button>
           </div>
@@ -273,8 +275,6 @@ export default function DesnoteAppV7() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, type: null, targetId: null, sourceId: null, isRoot: false });
   const [columnCount, setColumnCount] = useState(2);
-  
-  // NEW: View Mode State (ALL, FOLDER, NOTE)
   const [viewMode, setViewMode] = useState('ALL'); 
 
   const fileInputRef = useRef(null);
@@ -299,7 +299,6 @@ export default function DesnoteAppV7() {
   // --- ACTIONS ---
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
-  // NEW: Filter Toggle Logic
   const toggleViewMode = (mode) => {
     if (viewMode === mode) setViewMode('ALL');
     else setViewMode(mode);
@@ -438,15 +437,12 @@ export default function DesnoteAppV7() {
   const combinedItems = useMemo(() => {
     let folderItems = [];
     let noteItems = [];
-
-    // Filter Logic
     if (viewMode === 'ALL' || viewMode === 'FOLDER') {
       folderItems = folders.map(f => ({ type: 'FOLDER', data: f }));
     }
     if (viewMode === 'ALL' || viewMode === 'NOTE') {
       noteItems = rootNotes.map(n => ({ type: 'NOTE', data: n }));
     }
-
     return [...folderItems, ...noteItems];
   }, [folders, rootNotes, viewMode]);
 
@@ -469,62 +465,62 @@ export default function DesnoteAppV7() {
   // --- STYLING CONSTANTS ---
   const isTerminal = theme === 'dark';
   const bgClass = isTerminal ? 'bg-[#0d1117]' : 'bg-[#f6f8fa]';
-  const textClass = isTerminal ? 'text-[#3fb950]' : 'text-[#24292f]';
-  const fontClass = isTerminal ? 'font-mono' : 'font-sans';
+  const textClass = isTerminal ? 'text-[#e6edf3]' : 'text-[#24292f]';
+  const fontClass = 'font-mono'; // Forced Mono for GitHub/Linux feel
   const modalBg = isTerminal ? 'bg-[#161b22] border border-[#30363d] text-[#e6edf3]' : 'bg-white border border-[#d0d7de] text-[#24292f] shadow-xl rounded-lg';
 
   // --- RENDER ---
   return (
     <div className={`min-h-screen w-full relative flex flex-col ${bgClass} ${textClass} ${fontClass} transition-colors duration-500 overflow-hidden`}>
       
-      {/* BACKGROUND GRID (AESTHETIC) */}
+      {/* BACKGROUND GRID */}
       {isTerminal && (
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]" 
-             style={{ backgroundImage: 'linear-gradient(#3fb950 1px, transparent 1px), linear-gradient(90deg, #3fb950 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.02]" 
+             style={{ backgroundImage: 'linear-gradient(#30363d 1px, transparent 1px), linear-gradient(90deg, #30363d 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
         </div>
       )}
 
-      {/* SYSTEM STATUS BAR */}
-      <SystemStatus isTerminal={isTerminal} totalFolders={folders.length} totalNotes={folders.reduce((acc, f) => acc + f.notes.length, 0) + rootNotes.length} currentView={viewMode} />
+      {/* TOP SYSTEM STATUS */}
+      <SystemStatus isTerminal={isTerminal} viewMode={viewMode} />
 
-      <header className={`px-5 py-4 flex flex-col gap-4 z-10 sticky top-0 ${isTerminal ? 'bg-[#0d1117]/95 border-b border-[#30363d]' : 'bg-white/90 backdrop-blur shadow-sm'}`}>
+      {/* HEADER AREA */}
+      <header className={`px-4 py-3 flex flex-col gap-3 z-10 sticky top-0 ${isTerminal ? 'bg-[#0d1117]/95 border-b border-[#30363d]' : 'bg-white/90 backdrop-blur shadow-sm'}`}>
         <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-                {isTerminal ? <Terminal className="text-[#3fb950]" size={20} /> : <Github className="text-black" size={20} />}
-                <h1 className="text-xl font-bold tracking-tight">DESNOTE_V7</h1>
+                {isTerminal ? <Terminal className="text-[#e6edf3]" size={18} /> : <Github className="text-black" size={18} />}
+                <h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v7.2</span></h1>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => setSettingsOpen(true)} className="p-2 rounded-full hover:bg-current hover:bg-opacity-10 transition-colors active:scale-90">
-                  <Settings size={18} />
+              <button onClick={() => setSettingsOpen(true)} className="p-1.5 rounded-md hover:bg-current hover:bg-opacity-10 transition-colors">
+                  <Settings size={16} />
               </button>
             </div>
         </div>
 
-        {/* DASHBOARD STATS (INTERACTIVE FILTER) */}
+        {/* SLIM STATS & FILTER BAR */}
         {!searchQuery && (
-          <div className="flex gap-2 w-full overflow-x-auto pb-2 scrollbar-none">
-            <StatsCard 
+          <div className="flex gap-2 w-full overflow-x-auto pb-1 scrollbar-none items-center">
+            <StatsButton 
               icon={Folder} 
-              label="Project Dirs" 
+              label="FOLDERS" 
               value={folders.length} 
               isTerminal={isTerminal} 
               colorClass="text-blue-500" 
               onClick={() => toggleViewMode('FOLDER')}
               isActive={viewMode === 'FOLDER'}
             />
-            <StatsCard 
+            <StatsButton 
               icon={FileText} 
-              label="Active Notes" 
+              label="NOTES" 
               value={rootNotes.length} 
               isTerminal={isTerminal} 
               colorClass="text-green-500" 
               onClick={() => toggleViewMode('NOTE')}
               isActive={viewMode === 'NOTE'}
             />
-            <StatsCard 
-              icon={Zap} 
-              label="System" 
-              value="ONLINE" 
+             <StatsButton 
+              icon={Layers} 
+              label="ALL DATA" 
               isTerminal={isTerminal} 
               colorClass="text-yellow-500" 
               onClick={() => toggleViewMode('ALL')}
@@ -533,9 +529,11 @@ export default function DesnoteAppV7() {
           </div>
         )}
 
-        <div className={`relative w-full group transition-all duration-300 focus-within:scale-[1.01]`}>
-            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 opacity-50`} size={16} />
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={isTerminal ? "exec search_query..." : "Find notes..."} className={`w-full py-2.5 pl-10 pr-4 text-sm bg-transparent border rounded-md outline-none transition-all ${isTerminal ? 'border-[#30363d] focus:border-[#3fb950] placeholder-[#8b949e]' : 'border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-400'}`}/>
+        <div className={`relative w-full group`}>
+            <div className={`absolute left-3 top-1/2 -translate-y-1/2 opacity-50 font-mono text-xs flex items-center gap-1`}>
+                <Command size={12}/> {">"}
+            </div>
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="filter_content..." className={`w-full py-2 pl-12 pr-4 text-xs bg-transparent border rounded-md outline-none transition-all font-mono ${isTerminal ? 'border-[#30363d] focus:border-[#58a6ff] placeholder-[#8b949e] bg-[#010409]' : 'border-gray-300 bg-gray-50 focus:bg-white focus:border-blue-500'}`}/>
         </div>
       </header>
 
@@ -575,9 +573,9 @@ export default function DesnoteAppV7() {
             ))}
         </div>
         {combinedItems.length === 0 && (
-           <div className="flex flex-col items-center justify-center py-20 opacity-30 text-sm font-mono gap-4">
-              <Layers size={48} />
-              <div>[VIEW_MODE: {viewMode}] :: NO_DATA</div>
+           <div className="flex flex-col items-center justify-center py-20 opacity-30 text-xs font-mono gap-4">
+              <Layers size={32} />
+              <div>// EMPTY_VIEW: {viewMode}</div>
            </div>
         )}
       </main>
@@ -594,8 +592,8 @@ export default function DesnoteAppV7() {
              </button>
           </div>
         )}
-        <button onClick={() => setAddMenuOpen(!addMenuOpen)} className={`pointer-events-auto h-14 w-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-90 ${addMenuOpen ? 'rotate-45 bg-red-500' : ''} ${isTerminal ? 'bg-[#3fb950] text-black hover:bg-[#2ea043]' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
-          <Plus size={28} strokeWidth={3} />
+        <button onClick={() => setAddMenuOpen(!addMenuOpen)} className={`pointer-events-auto h-12 w-12 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-90 ${addMenuOpen ? 'rotate-45 bg-red-500' : ''} ${isTerminal ? 'bg-[#3fb950] text-black hover:bg-[#2ea043]' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
+          <Plus size={24} strokeWidth={3} />
         </button>
       </div>
 
@@ -603,9 +601,9 @@ export default function DesnoteAppV7() {
       {createModal.isOpen && (
          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className={`w-full max-w-sm p-6 ${modalBg} flex flex-col gap-4 shadow-2xl border-t-4 ${isTerminal ? 'border-t-[#3fb950]' : 'border-t-blue-500'}`}>
-             <h3 className="font-bold text-lg uppercase tracking-widest">NEW {createModal.type}</h3>
-             <input autoFocus placeholder="Enter name..." className="p-3 bg-transparent border rounded outline-none focus:ring-2 ring-opacity-50 ring-current transition-all" onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(e.target.value) }} onBlur={(e) => handleCreate(e.target.value)} />
-             <button onClick={() => setCreateModal({isOpen: false, type: null})} className="text-xs opacity-50 hover:opacity-100 mt-2">CANCEL (Tap outside)</button>
+             <h3 className="font-bold text-lg uppercase tracking-widest font-mono">NEW_{createModal.type}</h3>
+             <input autoFocus placeholder="Enter name..." className="p-3 bg-transparent border rounded outline-none focus:ring-2 ring-opacity-50 ring-current transition-all font-mono" onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(e.target.value) }} onBlur={(e) => handleCreate(e.target.value)} />
+             <button onClick={() => setCreateModal({isOpen: false, type: null})} className="text-xs opacity-50 hover:opacity-100 mt-2 font-mono">CANCEL (Tap outside)</button>
           </div>
         </div>
       )}
@@ -618,35 +616,35 @@ export default function DesnoteAppV7() {
         isTerminal={isTerminal}
       />
 
-      {/* SETTINGS MODAL (WITH THEME TOGGLE) */}
+      {/* SETTINGS MODAL */}
       {settingsOpen && (
        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className={`w-full max-w-sm p-6 ${modalBg} flex flex-col gap-6 shadow-2xl`}>
+          <div className={`w-full max-w-sm p-6 ${modalBg} flex flex-col gap-6 shadow-2xl font-mono`}>
              <div className="flex justify-between items-center border-b border-current border-opacity-20 pb-2">
                 <h3 className="font-bold text-lg uppercase tracking-widest flex items-center gap-2">
-                   <Settings size={18}/> SYSTEM
+                   <Settings size={18}/> CONFIG
                 </h3>
                 <button onClick={() => setSettingsOpen(false)}><X size={18}/></button>
              </div>
              
              <div className="flex flex-col gap-3">
-                <div className="text-[10px] font-bold opacity-50 uppercase tracking-widest">Appearance</div>
+                <div className="text-[10px] font-bold opacity-50 uppercase tracking-widest">Interface</div>
                 <button onClick={toggleTheme} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center justify-between hover:bg-current hover:bg-opacity-5 transition-all">
                     <div className="flex items-center gap-3">
-                        {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
-                        <span className="font-bold text-sm">Theme Mode</span>
+                        {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
+                        <span className="font-bold text-xs">Color Scheme</span>
                     </div>
-                    <span className="text-xs opacity-60 uppercase">{theme}</span>
+                    <span className="text-[10px] opacity-60 uppercase bg-current bg-opacity-10 px-2 py-0.5 rounded">{theme}</span>
                 </button>
 
-                <div className="text-[10px] font-bold opacity-50 uppercase tracking-widest mt-2">Data Management</div>
-                <button onClick={handleExport} className="w-full py-4 px-4 rounded border border-current border-opacity-20 flex items-center gap-4 hover:bg-current hover:bg-opacity-5 transition-all">
-                   <div className={`p-2 rounded-full ${isTerminal ? 'bg-[#3fb950]/20 text-[#3fb950]' : 'bg-blue-100 text-blue-600'}`}><Download size={20}/></div>
-                   <div className="text-left flex-1"><div className="font-bold text-sm">Backup (JSON)</div><div className="text-[10px] opacity-60">Export system state</div></div>
+                <div className="text-[10px] font-bold opacity-50 uppercase tracking-widest mt-2">I/O Operations</div>
+                <button onClick={handleExport} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center gap-4 hover:bg-current hover:bg-opacity-5 transition-all">
+                   <div className={`p-1.5 rounded-full ${isTerminal ? 'bg-[#3fb950]/20 text-[#3fb950]' : 'bg-blue-100 text-blue-600'}`}><Download size={16}/></div>
+                   <div className="text-left flex-1"><div className="font-bold text-xs">Export Backup</div><div className="text-[9px] opacity-60">Save .json file</div></div>
                 </button>
-                <button onClick={() => fileInputRef.current.click()} className="w-full py-4 px-4 rounded border border-current border-opacity-20 flex items-center gap-4 hover:bg-current hover:bg-opacity-5 transition-all">
-                   <div className={`p-2 rounded-full ${isTerminal ? 'bg-yellow-500/20 text-yellow-500' : 'bg-orange-100 text-orange-600'}`}><Upload size={20}/></div>
-                   <div className="text-left flex-1"><div className="font-bold text-sm">Restore Data</div><div className="text-[10px] opacity-60">Overwrite system state</div></div>
+                <button onClick={() => fileInputRef.current.click()} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center gap-4 hover:bg-current hover:bg-opacity-5 transition-all">
+                   <div className={`p-1.5 rounded-full ${isTerminal ? 'bg-yellow-500/20 text-yellow-500' : 'bg-orange-100 text-orange-600'}`}><Upload size={16}/></div>
+                   <div className="text-left flex-1"><div className="font-bold text-xs">Import Data</div><div className="text-[9px] opacity-60">Restore from .json</div></div>
                    <input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden" />
                 </button>
              </div>
@@ -656,17 +654,17 @@ export default function DesnoteAppV7() {
       
       {moveModal.isOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className={`w-full max-w-sm p-6 ${modalBg} flex flex-col gap-4 max-h-[80vh]`}>
-            <h3 className="font-bold border-b border-opacity-20 border-current pb-2">MOVE TO:</h3>
+          <div className={`w-full max-w-sm p-6 ${modalBg} flex flex-col gap-4 max-h-[80vh] font-mono`}>
+            <h3 className="font-bold border-b border-opacity-20 border-current pb-2">mv SOURCE TARGET</h3>
             <div className="flex flex-col gap-2 overflow-y-auto custom-scrollbar flex-1">
                {!moveModal.isFromRoot && (
-                  <button onClick={() => executeMove('ROOT')} className="p-3 text-left border border-opacity-20 border-current rounded font-bold flex items-center gap-2 hover:bg-current hover:bg-opacity-10"><LayoutGrid size={16}/> DASHBOARD</button>
+                  <button onClick={() => executeMove('ROOT')} className="p-3 text-left border border-opacity-20 border-current rounded font-bold flex items-center gap-2 hover:bg-current hover:bg-opacity-10 text-xs"><LayoutGrid size={14}/> ./root</button>
                )}
                {folders.filter(f => f.id !== moveModal.sourceId).map(f => (
-                  <button key={f.id} onClick={() => executeMove(f.id)} className="p-3 text-left border border-opacity-20 border-current rounded flex items-center gap-2 hover:bg-current hover:bg-opacity-10"><Folder size={16}/> {f.name}</button>
+                  <button key={f.id} onClick={() => executeMove(f.id)} className="p-3 text-left border border-opacity-20 border-current rounded flex items-center gap-2 hover:bg-current hover:bg-opacity-10 text-xs"><Folder size={14}/> {f.name}</button>
                ))}
             </div>
-            <button onClick={() => setMoveModal({...moveModal, isOpen: false})} className="py-2 opacity-50 hover:opacity-100">CANCEL</button>
+            <button onClick={() => setMoveModal({...moveModal, isOpen: false})} className="py-2 opacity-50 hover:opacity-100 text-xs">ABORT_OPERATION</button>
           </div>
         </div>
       )}
