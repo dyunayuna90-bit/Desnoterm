@@ -3,7 +3,7 @@ import {
   Folder, FileText, ChevronDown, ChevronRight, Plus, 
   Settings, Moon, Sun, X, Save, Move, Trash2, Terminal, Github, 
   Search, LayoutGrid, AlertTriangle,
-  Download, Upload, Cpu, GitBranch, Command, Clock, Disc
+  Download, Upload, Cpu, GitBranch, Command, Clock, Disc, Hash
 } from 'lucide-react';
 
 // --- DATA INITIALIZATION ---
@@ -34,35 +34,55 @@ const initialRootNotes = [
   { id: 'root-2', title: 'grocery_unj.list', content: '1. Rokok Ziga\n2. Kopi Hitam Kantin Blok M\n3. Kertas A3\n4. Cat Minyak\n5. Kuas nomor 12', isPeeked: false },
 ];
 
-// --- GLOBAL STYLES (Linux Cursor & Scrollbar) ---
+// --- HACKER TYPEWRITER COMPONENT ---
+const Typewriter = ({ text, speed = 5, onComplete }) => {
+  const [displayed, setDisplayed] = useState('');
+  
+  useEffect(() => {
+    let i = 0;
+    setDisplayed('');
+    const timer = setInterval(() => {
+      if (i < text.length) {
+        setDisplayed(prev => prev + text.charAt(i));
+        i++;
+      } else {
+        clearInterval(timer);
+        if(onComplete) onComplete();
+      }
+    }, speed); // Kecepatan ngetik
+    return () => clearInterval(timer);
+  }, [text]);
+
+  return <span>{displayed}<span className="animate-pulse inline-block w-2 h-4 bg-current ml-1 align-middle opacity-70"></span></span>;
+};
+
+// --- GLOBAL STYLES ---
 const GlobalStyles = () => (
   <style>{`
     /* Custom Scrollbar */
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #30363d;
-      border-radius: 0px; /* Square edges */
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #58a6ff;
-    }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #30363d; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #58a6ff; }
     
     /* TERMINAL CURSOR HACK */
     textarea, input {
-      caret-color: #3fb950; /* Neon Green */
-      caret-shape: block;   /* Experimental Block Cursor */
+      caret-color: #3fb950; 
     }
     
     /* Selection Color */
     ::selection {
-      background: rgba(63, 185, 80, 0.3);
-      color: white;
+      background: rgba(63, 185, 80, 0.99);
+      color: black;
+    }
+
+    /* Flash Animation for Feedback */
+    @keyframes flash {
+      0% { background-color: rgba(63, 185, 80, 0.5); }
+      100% { background-color: transparent; }
+    }
+    .flash-active:active {
+      animation: flash 0.1s ease-out;
     }
   `}</style>
 );
@@ -87,7 +107,7 @@ const StatsButton = ({ icon: Icon, label, value, isTerminal, colorClass, onClick
   <button 
     onClick={onClick}
     className={`
-      flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] font-mono transition-all select-none
+      flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] font-mono transition-all select-none flash-active
       ${isActive 
         ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') 
         : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e] hover:border-[#8b949e] hover:text-[#c9d1d9]' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700')
@@ -125,23 +145,24 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
              <span className="font-bold text-[11px] truncate font-mono">{note.title}</span>
           </div>
           <div className="flex items-center gap-1 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
-            <button onClick={onMove} className={`p-1 rounded hover:bg-current hover:bg-opacity-10 text-yellow-500 opacity-40 hover:opacity-100 transition-opacity`}>
+            <button onClick={onMove} className={`p-1 rounded hover:bg-current hover:bg-opacity-10 text-yellow-500 opacity-40 hover:opacity-100 transition-opacity flash-active`}>
               <Move size={10} />
             </button>
-            <button onClick={onDelete} className={`p-1 rounded hover:bg-red-500/10 text-red-500 opacity-40 hover:opacity-100 transition-opacity`}>
+            <button onClick={onDelete} className={`p-1 rounded hover:bg-red-500/10 text-red-500 opacity-40 hover:opacity-100 transition-opacity flash-active`}>
               <Trash2 size={10} />
             </button>
           </div>
        </div>
        <div 
-         className="p-3 cursor-pointer min-h-[50px] flex-1 hover:bg-current hover:bg-opacity-5 transition-colors"
+         className="p-3 cursor-pointer min-h-[50px] flex-1 hover:bg-current hover:bg-opacity-5 transition-colors flash-active"
          onClick={onOpen}
        >
           <div className={`text-[10px] leading-relaxed font-mono ${isTerminal ? 'text-[#8b949e]' : 'text-gray-600'}`}>
             {note.isPeeked 
               ? (
-                  <div className={`pl-3 py-1 border-l-4 ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'} animate-in slide-in-from-left-2 duration-200`}>
-                    {getPeekContent(note.content)}
+                  <div className={`pl-2 py-1 border-l-2 ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'}`}>
+                    {/* HACKER TYPING EFFECT */}
+                    <Typewriter text={getPeekContent(note.content)} speed={10} />
                   </div>
                 )
               : (
@@ -152,21 +173,22 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
             }
           </div>
        </div>
+       {/* TRANSPARENT PEEK BUTTON WITH FLASH FEEDBACK */}
        <button 
          onClick={(e) => { e.stopPropagation(); onPeek(); }}
-         className={`w-full py-1 flex items-center justify-center border-t ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50 text-[9px] font-bold uppercase tracking-wider hover:bg-current hover:bg-opacity-10 transition-colors opacity-40 hover:opacity-100`}
+         className={`w-full py-1.5 flex items-center justify-center border-t ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50 text-[9px] font-bold uppercase tracking-wider transition-colors opacity-50 hover:opacity-100 bg-transparent flash-active`}
        >
-          {note.isPeeked ? 'COLLAPSE' : 'PEEK'}
+          {note.isPeeked ? '[ CLOSE_STREAM ]' : '[ SCAN_DATA ]'}
        </button>
     </div>
   );
 };
 
 const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDeleteNote, onOpenNote, onPeekNote, onAddNote }) => {
-  // CLEANER LOOK: No background when collapsed
-  const baseClass = isTerminal 
-    ? (folder.isExpanded ? 'bg-[#0d1117] border border-[#30363d]' : 'bg-transparent border border-transparent hover:border-[#30363d]')
-    : (folder.isExpanded ? 'bg-white border border-[#d0d7de] shadow-sm' : 'bg-transparent border border-transparent hover:border-[#d0d7de]');
+  // RESTORED: Box Style always visible but cleaner
+  const cardClass = isTerminal 
+    ? 'bg-[#0d1117] border border-[#30363d] hover:border-[#8b949e]' 
+    : 'bg-white border border-[#d0d7de] hover:border-blue-300 shadow-sm';
 
   const getPeekContent = (text) => {
     if (!text) return "Empty...";
@@ -175,55 +197,55 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
   };
 
   return (
-    <div className={`relative flex flex-col w-full rounded-sm transition-all duration-200 ${baseClass}`}>
+    <div className={`relative flex flex-col w-full rounded-sm transition-all duration-200 ${cardClass}`}>
       <div 
-        className={`p-2 px-3 flex items-center justify-between cursor-pointer ${folder.isExpanded ? (isTerminal ? 'border-b border-[#30363d]' : 'border-b border-[#d0d7de]') : ''}`}
+        className={`p-2 px-3 flex items-center justify-between cursor-pointer flash-active ${folder.isExpanded ? (isTerminal ? 'border-b border-[#30363d]' : 'border-b border-[#d0d7de]') : ''}`}
         onClick={onToggle}
       >
         <div className="flex items-center gap-2 overflow-hidden">
            <Folder size={14} className={isTerminal ? 'text-[#3fb950]' : 'text-yellow-500'} />
-           <div className="flex items-center gap-2 overflow-hidden">
+           <div className="flex items-center gap-1 overflow-hidden">
              <span className={`font-bold text-[11px] truncate font-mono ${isTerminal ? 'text-[#e6edf3]' : 'text-gray-800'}`}>{folder.name}</span>
-             {/* CLEAN: Just text for count, no box */}
+             {/* CLEAN COUNT: No box, just text */}
              {!folder.isExpanded && <span className="text-[10px] opacity-40 font-mono ml-1">[{folder.notes.length}]</span>}
            </div>
         </div>
         <div className="flex items-center opacity-40 hover:opacity-100">
             {folder.isExpanded ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
-            <button onClick={(e) => {e.stopPropagation(); onDelete();}} className="ml-2 p-1 hover:text-red-500 transition-colors">
+            <button onClick={(e) => {e.stopPropagation(); onDelete();}} className="ml-2 p-1 hover:text-red-500 transition-colors flash-active">
                 <Trash2 size={10}/>
             </button>
         </div>
       </div>
 
       {folder.isExpanded && (
-        <div className="p-2 space-y-2 animate-in slide-in-from-top-2 fade-in duration-200 origin-top">
+        <div className="p-2 space-y-2 origin-top">
             {folder.notes.length === 0 ? <div className="text-center opacity-30 text-[10px] py-1 font-mono">// Empty Folder</div> : 
             folder.notes.map(note => (
                <div key={note.id} className={`flex flex-col ${isTerminal ? 'bg-[#161b22] border border-[#30363d]' : 'bg-gray-50 border border-gray-100'} rounded-sm overflow-hidden transition-transform active:scale-[0.99]`}>
                  <div className="flex items-center justify-between p-1.5 pl-3 border-b border-transparent hover:border-current hover:border-opacity-10">
-                    <div className="flex-1 cursor-pointer overflow-hidden" onClick={() => onOpenNote(note)}>
+                    <div className="flex-1 cursor-pointer overflow-hidden flash-active" onClick={() => onOpenNote(note)}>
                        <span className="text-[10px] font-bold truncate block hover:underline font-mono">{note.title}</span>
                     </div>
                     <div className="flex gap-1 pl-2">
-                      <button onClick={() => onMoveNote(note.id)} className="hover:text-yellow-500 opacity-50 hover:opacity-100 p-1"><Move size={10}/></button>
-                      <button onClick={() => onDeleteNote(note.id)} className="hover:text-red-500 opacity-50 hover:opacity-100 p-1"><Trash2 size={10}/></button>
+                      <button onClick={() => onMoveNote(note.id)} className="hover:text-yellow-500 opacity-50 hover:opacity-100 p-1 flash-active"><Move size={10}/></button>
+                      <button onClick={() => onDeleteNote(note.id)} className="hover:text-red-500 opacity-50 hover:opacity-100 p-1 flash-active"><Trash2 size={10}/></button>
                     </div>
                  </div>
-                 {/* PEEK: Thick Border Style */}
+                 {/* PEEK INSIDE FOLDER */}
                  {note.isPeeked && (
-                   <div className={`mx-2 mb-2 mt-1 pl-2 py-1 border-l-2 text-[9px] font-mono whitespace-pre-wrap animate-in slide-in-from-left-2 ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'}`}>
-                     {getPeekContent(note.content)}
+                   <div className={`mx-2 mb-2 mt-1 pl-2 py-1 border-l-2 text-[9px] font-mono whitespace-pre-wrap ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'}`}>
+                     <Typewriter text={getPeekContent(note.content)} speed={5} />
                    </div>
                  )}
-                 <button onClick={() => onPeekNote(note.id)} className="w-full py-0.5 bg-black/5 hover:bg-black/10 text-[8px] text-center opacity-40 uppercase tracking-widest hover:opacity-100 transition-opacity">
-                   {note.isPeeked ? 'Collapse' : 'Preview'}
+                 <button onClick={() => onPeekNote(note.id)} className="w-full py-0.5 bg-black/5 hover:bg-black/10 text-[8px] text-center opacity-40 uppercase tracking-widest hover:opacity-100 transition-opacity flash-active">
+                   {note.isPeeked ? '[ COLLAPSE ]' : '[ PEEK ]'}
                  </button>
                </div>
             ))}
             <button 
                 onClick={onAddNote}
-                className="w-full py-1.5 text-[10px] text-center opacity-40 hover:opacity-100 border border-dashed border-current rounded flex justify-center items-center gap-1 hover:bg-current hover:bg-opacity-5 transition-all font-mono"
+                className="w-full py-1.5 text-[10px] text-center opacity-40 hover:opacity-100 border border-dashed border-current rounded flex justify-center items-center gap-1 hover:bg-current hover:bg-opacity-5 transition-all font-mono flash-active"
             >
                 <Plus size={10}/> Add_File
             </button>
@@ -239,19 +261,19 @@ const EditorModal = ({ note, isTerminal, onClose, onSave }) => {
     <div className={`fixed inset-0 z-[100] flex flex-col ${isTerminal ? 'bg-[#0d1117] text-[#e6edf3]' : 'bg-white text-[#24292f]'} font-mono animate-in slide-in-from-bottom-5 fade-in duration-200`}>
       <div className={`flex justify-between items-center p-2 px-4 border-b ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'}`}>
         <div className="flex items-center gap-2 overflow-hidden">
-            <span className="opacity-50 text-xs">vim</span>
+            <span className="opacity-50 text-xs text-[#3fb950]">vim</span>
             <span className="font-bold text-sm truncate">{note.title}</span>
-            <span className="opacity-50 text-xs ml-2">[+]</span>
+            <span className="opacity-50 text-xs ml-2">[INSERT]</span>
         </div>
-        <button onClick={onClose} className={`px-3 py-1 text-xs font-bold border rounded flex items-center gap-2 ${isTerminal ? 'border-[#30363d] hover:bg-[#21262d]' : 'border-[#d0d7de] hover:bg-[#f3f4f6]'} transition-colors`}>
-            <Save size={14} /> SAVE & CLOSE
+        <button onClick={onClose} className={`px-3 py-1 text-xs font-bold border rounded flex items-center gap-2 ${isTerminal ? 'border-[#30363d] hover:bg-[#21262d]' : 'border-[#d0d7de] hover:bg-[#f3f4f6]'} transition-colors flash-active`}>
+            <Save size={14} /> :wq
         </button>
       </div>
       <textarea 
         value={note.content}
         onChange={(e) => onSave(e.target.value)}
         className={`flex-1 w-full p-4 md:p-8 bg-transparent outline-none resize-none leading-relaxed text-sm custom-scrollbar`}
-        placeholder={isTerminal ? "// Start typing your content here..." : "Start writing..."}
+        placeholder={isTerminal ? "// Start typing..." : "Start writing..."}
         spellCheck={false}
       />
     </div>
@@ -269,10 +291,10 @@ const DeleteConfirmModal = ({ isOpen, type, onConfirm, onCancel, isTerminal }) =
           <h3 className="font-bold text-xl">CONFIRM DELETION</h3>
           <p className="opacity-70 text-xs">Target: {type}. This action is irreversible.</p>
           <div className="flex gap-2 w-full mt-4">
-              <button onClick={onConfirm} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded uppercase tracking-wider transition-colors shadow-lg">
+              <button onClick={onConfirm} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded uppercase tracking-wider transition-colors shadow-lg flash-active">
                 DELETE PERMANENTLY
               </button>
-              <button onClick={onCancel} className="flex-1 py-2 border border-current opacity-60 hover:opacity-100 text-xs font-bold rounded uppercase tracking-wider transition-opacity">
+              <button onClick={onCancel} className="flex-1 py-2 border border-current opacity-60 hover:opacity-100 text-xs font-bold rounded uppercase tracking-wider transition-opacity flash-active">
                 CANCEL
               </button>
           </div>
@@ -516,7 +538,7 @@ export default function DesnoteAppV7() {
         <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
                 {isTerminal ? <Terminal className="text-[#e6edf3]" size={18} /> : <Github className="text-black" size={18} />}
-                <h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v7.4</span></h1>
+                <h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v7.5</span></h1>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => setSettingsOpen(true)} className="p-1.5 rounded-md hover:bg-current hover:bg-opacity-10 transition-colors">
