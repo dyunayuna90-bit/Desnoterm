@@ -14,10 +14,10 @@ const getFormattedTime = () => new Date().toLocaleTimeString('en-US', { hour12: 
 const initialFolders = [
   {
     id: 'folder-1',
-    name: '~/skripsi/sejarah_lisan_indonesia_final_draft_revisi_dosen_pembimbing',
+    name: '~/skripsi/sejarah_lisan_indonesia_final_draft_revisi',
     isExpanded: false,
     notes: [
-      { id: 'note-1', title: 'wawancara_pak_hartono_mei_98_full_transcript.md', content: 'Narasumber utama untuk bab 3. Punya arsip foto 98. Beliau bilang kalau arsip itu harus dijaga baik-baik karena bukti sejarah yang otentik tidak bisa dipalsukan begitu saja.', isPeeked: false },
+      { id: 'note-1', title: 'wawancara_pak_hartono_mei_98_full.md', content: 'Narasumber utama untuk bab 3. Punya arsip foto 98. Beliau bilang kalau arsip itu harus dijaga baik-baik.', isPeeked: false },
     ]
   },
   {
@@ -25,17 +25,17 @@ const initialFolders = [
     name: '~/kuliah/filsafat',
     isExpanded: true,
     notes: [
-        { id: 'note-f1', title: 'stoikisme_intro_marcus_aurelius.txt', content: 'Fokus pada apa yang bisa dikendalikan. Abaikan opini orang lain. Hidup itu bukan tentang apa yang terjadi padamu, tapi bagaimana kamu bereaksi terhadapnya.', isPeeked: false }
+        { id: 'note-f1', title: 'stoikisme_intro_marcus_aurelius.txt', content: 'Fokus pada apa yang bisa dikendalikan. Abaikan opini orang lain.', isPeeked: false }
     ]
   }
 ];
 
 const initialRootNotes = [
-  { id: 'root-1', title: 'ide_lukisan_cyberpunk_2077_jakarta_barat.txt', content: 'Konsep: Cyberpunk Jakarta. Canvas 40x60. Acrylic. Warna dominan neon pink dan cyan, tapi ada sentuhan kearifan lokal seperti gerobak nasgor yang terbang.', isPeeked: false },
-  { id: 'root-2', title: 'grocery_list_unj_kantin_blok_m.list', content: '1. Rokok Ziga\n2. Kopi Hitam Kantin Blok M\n3. Kertas A3\n4. Cat Minyak\n5. Kuas nomor 12', isPeeked: false },
+  { id: 'root-1', title: 'ide_lukisan_cyberpunk_2077.txt', content: 'Konsep: Cyberpunk Jakarta. Canvas 40x60. Acrylic.', isPeeked: false },
+  { id: 'root-2', title: 'grocery_list_unj_kantin.list', content: '1. Rokok Ziga\n2. Kopi Hitam\n3. Kertas A3\n4. Cat Minyak', isPeeked: false },
 ];
 
-// --- SMART TYPEWRITER ---
+// --- SMART TYPEWRITER (ANTI-CRASH) ---
 const Typewriter = ({ text = "", speed = 20, delay = 0, triggerKey = null }) => {
   const safeText = text || "";
   const [displayed, setDisplayed] = useState(safeText); 
@@ -90,7 +90,6 @@ const Typewriter = ({ text = "", speed = 20, delay = 0, triggerKey = null }) => 
 // --- GLOBAL STYLES ---
 const GlobalStyles = () => (
   <style>{`
-    /* Minimal Scrollbar */
     .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
@@ -138,9 +137,10 @@ const SelectionCheckbox = ({ isSelected, onToggle, isTerminal }) => (
 );
 
 const NoteCard = ({ note, isTerminal, onOpen, onPeek, refreshKey, isSelectionMode, isSelected, onToggleSelect }) => {
+  // IMPROVED LIGHT MODE: Stronger border, better shadow
   const cardClass = isTerminal 
     ? `bg-[#0d1117] border ${isSelected ? 'border-[#3fb950]' : 'border-[#30363d]'} hover:border-[#8b949e]` 
-    : `bg-white border ${isSelected ? 'border-blue-500' : 'border-[#d0d7de]'} hover:border-blue-300 shadow-sm`;
+    : `bg-white border ${isSelected ? 'border-blue-500 ring-1 ring-blue-500' : 'border-[#d0d7de]'} hover:border-[#8c959f] shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:shadow-md`;
   
   const getPeekContent = (text) => {
     if (!text) return "Empty...";
@@ -155,18 +155,18 @@ const NoteCard = ({ note, isTerminal, onOpen, onPeek, refreshKey, isSelectionMod
 
   return (
     <div 
-        className={`relative flex flex-col ${cardClass} h-auto overflow-hidden group w-full rounded-sm transition-all duration-500 ${isSelected ? 'translate-x-1' : ''}`}
+        className={`relative flex flex-col ${cardClass} h-auto overflow-hidden group w-full rounded-md transition-all duration-300 ${isSelected ? 'translate-x-1' : ''}`}
         onClick={handleCardClick}
     >
        {/* HEADER */}
-       <div className={`flex items-start p-3 border-b ${isTerminal ? 'bg-[#161b22] border-[#30363d]' : 'bg-gray-50 border-[#d0d7de]'} border-opacity-50 min-h-[60px] flash-active cursor-pointer`}>
+       <div className={`flex items-start p-3 border-b ${isTerminal ? 'bg-[#161b22] border-[#30363d]' : 'bg-[#f6f8fa] border-[#d0d7de]'} border-opacity-50 min-h-[60px] flash-active cursor-pointer`}>
           {isSelectionMode && <SelectionCheckbox isSelected={isSelected} onToggle={onToggleSelect} isTerminal={isTerminal} />}
           <div className="flex-1 overflow-hidden">
              <div className="flex items-center gap-2 mb-1">
-                <FileText size={12} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-500'} />
+                <FileText size={12} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-600'} />
                 <span className={`font-bold text-[10px] font-mono uppercase tracking-wide opacity-50`}>DOC</span>
              </div>
-             <span className={`font-bold text-xs font-mono leading-snug line-clamp-3 ${isTerminal ? 'text-[#e6edf3]' : 'text-gray-800'}`}>
+             <span className={`font-bold text-xs font-mono leading-snug line-clamp-3 ${isTerminal ? 'text-[#e6edf3]' : 'text-[#1f2328]'}`}>
                 <Typewriter text={note.title} speed={10} triggerKey={refreshKey} />
              </span>
           </div>
@@ -175,8 +175,8 @@ const NoteCard = ({ note, isTerminal, onOpen, onPeek, refreshKey, isSelectionMod
        {/* PEEK CONTENT */}
        {note.isPeeked && (
            <div className="p-3 cursor-pointer flex-1 hover:bg-current hover:bg-opacity-5 transition-colors flash-active" onClick={(e) => { e.stopPropagation(); onOpen(); }}>
-              <div className={`text-[10px] leading-relaxed font-mono ${isTerminal ? 'text-[#8b949e]' : 'text-gray-600'}`}>
-                  <div className={`pl-2 py-1 border-l-2 ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'}`}>
+              <div className={`text-[10px] leading-relaxed font-mono ${isTerminal ? 'text-[#8b949e]' : 'text-[#57606a]'}`}>
+                  <div className={`pl-2 py-1 border-l-2 ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-[#1f2328]'}`}>
                     <Typewriter text={getPeekContent(note.content)} speed={5} triggerKey={note.isPeeked} />
                   </div>
               </div>
@@ -186,7 +186,7 @@ const NoteCard = ({ note, isTerminal, onOpen, onPeek, refreshKey, isSelectionMod
        {!isSelectionMode && (
            <button 
              onClick={(e) => { e.stopPropagation(); onPeek(); }}
-             className={`w-full py-1.5 flex items-center justify-center border-t ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50 text-[9px] font-bold uppercase tracking-wider transition-colors opacity-50 hover:opacity-100 bg-transparent flash-active z-10`}
+             className={`w-full py-1.5 flex items-center justify-center border-t ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50 text-[9px] font-bold uppercase tracking-wider transition-colors opacity-50 hover:opacity-100 bg-transparent flash-active z-10 ${isTerminal ? 'text-white' : 'text-gray-600'}`}
            >
               {note.isPeeked ? '[ CLOSE_STREAM ]' : '[ SCAN_DATA ]'}
            </button>
@@ -198,7 +198,7 @@ const NoteCard = ({ note, isTerminal, onOpen, onPeek, refreshKey, isSelectionMod
 const FolderCard = ({ folder, isTerminal, onToggle, onMoveNote, onDeleteNote, onOpenNote, onPeekNote, onAddNote, refreshKey, isSelectionMode, isSelected, onToggleSelect, selectedSubItems = new Set(), onToggleSubItem }) => {
   const cardClass = isTerminal 
     ? `bg-[#0d1117] border ${isSelected ? 'border-[#3fb950]' : 'border-[#30363d]'} hover:border-[#8b949e]` 
-    : `bg-white border ${isSelected ? 'border-blue-500' : 'border-[#d0d7de]'} hover:border-blue-300 shadow-sm`;
+    : `bg-white border ${isSelected ? 'border-blue-500 ring-1 ring-blue-500' : 'border-[#d0d7de]'} hover:border-[#8c959f] shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:shadow-md`;
 
   const handleHeaderClick = () => {
       if (isSelectionMode) onToggleSelect();
@@ -206,17 +206,17 @@ const FolderCard = ({ folder, isTerminal, onToggle, onMoveNote, onDeleteNote, on
   };
 
   return (
-    <div className={`relative flex flex-col w-full rounded-sm transition-all duration-500 ${cardClass} ${folder.isExpanded ? 'h-full' : ''}`}>
+    <div className={`relative flex flex-col w-full rounded-md transition-all duration-300 ${cardClass} ${folder.isExpanded ? 'h-full' : ''}`}>
       <div 
-        className={`p-3 flex items-start cursor-pointer flash-active ${folder.isExpanded ? (isTerminal ? 'border-b border-[#30363d]' : 'border-b border-[#d0d7de]') : ''}`}
+        className={`p-3 flex items-start cursor-pointer flash-active ${folder.isExpanded ? (isTerminal ? 'border-b border-[#30363d]' : 'border-b border-[#d0d7de]') : ''} ${isTerminal ? '' : 'bg-[#f6f8fa]'}`}
         onClick={handleHeaderClick}
       >
         {isSelectionMode && <SelectionCheckbox isSelected={isSelected} onToggle={onToggleSelect} isTerminal={isTerminal} />}
 
         <div className="flex-1 flex items-start gap-2 overflow-hidden">
-           <Folder size={16} className={`mt-0.5 ${isTerminal ? 'text-[#3fb950]' : 'text-yellow-500'}`} />
+           <Folder size={16} className={`mt-0.5 ${isTerminal ? 'text-[#3fb950]' : 'text-blue-500'}`} />
            <div className="flex flex-col gap-1 w-full">
-             <span className={`font-bold text-xs font-mono leading-snug line-clamp-3 ${isTerminal ? 'text-[#e6edf3]' : 'text-gray-800'}`}>
+             <span className={`font-bold text-xs font-mono leading-snug line-clamp-3 ${isTerminal ? 'text-[#e6edf3]' : 'text-[#1f2328]'}`}>
                 <Typewriter text={folder.name} speed={15} triggerKey={refreshKey} />
              </span>
              {!folder.isExpanded && <span className="text-[9px] opacity-40 font-mono">SIZE: {folder.notes.length} ITEMS</span>}
@@ -234,7 +234,7 @@ const FolderCard = ({ folder, isTerminal, onToggle, onMoveNote, onDeleteNote, on
         <div className="p-2 space-y-2 origin-top border-l-2 border-opacity-10 ml-2 my-2 border-current flex-1">
             {folder.notes.length === 0 ? <div className="text-center opacity-30 text-[10px] py-1 font-mono">// Empty Folder</div> : 
             folder.notes.map(note => (
-               <div key={note.id} className={`flex flex-col ${isTerminal ? 'bg-[#161b22] border border-[#30363d]' : 'bg-gray-50 border border-gray-100'} rounded-sm overflow-hidden transition-transform active:scale-[0.99] ${isSelectionMode && selectedSubItems.has(note.id) ? (isTerminal ? 'border-[#3fb950]' : 'border-blue-500') : ''}`}>
+               <div key={note.id} className={`flex flex-col ${isTerminal ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-[#d0d7de]'} rounded-sm overflow-hidden transition-transform active:scale-[0.99] ${isSelectionMode && selectedSubItems.has(note.id) ? (isTerminal ? 'border-[#3fb950]' : 'border-blue-500') : ''}`}>
                  <div 
                     className="flex items-center justify-between p-2 border-b border-transparent hover:border-current hover:border-opacity-10 cursor-pointer"
                     onClick={() => {
@@ -257,7 +257,7 @@ const FolderCard = ({ folder, isTerminal, onToggle, onMoveNote, onDeleteNote, on
                  </div>
                  {!isSelectionMode && note.isPeeked && (
                    <div 
-                     className={`mx-2 mb-2 mt-1 pl-2 py-1 border-l-2 text-[9px] font-mono whitespace-pre-wrap cursor-pointer ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'}`}
+                     className={`mx-2 mb-2 mt-1 pl-2 py-1 border-l-2 text-[9px] font-mono whitespace-pre-wrap cursor-pointer ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-[#1f2328]'}`}
                      onClick={() => onOpenNote(note)}
                    >
                      <Typewriter text={note.content ? note.content.substring(0, 100) + "..." : "Empty..."} speed={5} triggerKey={note.isPeeked} />
@@ -288,17 +288,14 @@ const EditorModal = ({ note, isTerminal, onClose, onSave }) => {
   if (!note) return null;
   const stats = getEditorStats(note.content);
   
-  // Dynamic Line Numbers (Syncs based on content)
-  const lineCount = Math.max(50, stats.lines); // Minimum 50 lines visually
+  const lineCount = Math.max(50, stats.lines); 
   const lines = Array.from({ length: lineCount }, (_, i) => i + 1);
 
   return (
     <div className={`fixed inset-0 z-[100] flex flex-col ${isTerminal ? 'bg-[#0d1117] text-[#e6edf3]' : 'bg-white text-[#24292f]'} font-mono animate-in slide-in-from-bottom-5 fade-in duration-200`}>
-      {/* EDITOR HEADER (STATS MOVED HERE) */}
       <div className={`flex justify-between items-center p-2 px-4 border-b ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'}`}>
         <div className="flex flex-col gap-1 overflow-hidden flex-1 mr-4">
             <span className="font-bold text-xs truncate">{note.title}</span>
-            {/* STATS IN HEADER */}
             <div className={`flex gap-3 text-[9px] opacity-60`}>
                 <span className="flex items-center gap-1"><AlignLeft size={8}/> {stats.lines}</span>
                 <span className="flex items-center gap-1"><Hash size={8}/> {stats.words}</span>
@@ -311,23 +308,18 @@ const EditorModal = ({ note, isTerminal, onClose, onSave }) => {
         </button>
       </div>
 
-      {/* EDITOR BODY */}
       <div className="flex-1 flex overflow-hidden relative">
-          {/* SCROLL CONTAINER (Shared by Lines & Textarea) */}
           <div className="flex-1 flex overflow-y-auto custom-scrollbar relative">
-              {/* Line Numbers */}
-              <div className={`flex flex-col items-end pt-4 pr-3 pl-1 text-[10px] opacity-30 select-none border-r ${isTerminal ? 'border-[#30363d] bg-[#0d1117]' : 'border-[#d0d7de] bg-gray-50'} min-h-full`}>
+              <div className={`flex flex-col items-end pt-4 pr-3 pl-1 text-[10px] opacity-30 select-none border-r ${isTerminal ? 'border-[#30363d] bg-[#0d1117]' : 'border-[#d0d7de] bg-[#f6f8fa]'} min-h-full`}>
                   {lines.map(line => (
                       <div key={line} className="leading-relaxed h-[20px]">{line}</div>
                   ))}
               </div>
-              
-              {/* Text Area */}
               <textarea 
                 value={note.content}
                 onChange={(e) => onSave(e.target.value)}
                 className={`flex-1 w-full p-4 bg-transparent outline-none resize-none text-xs leading-relaxed font-mono whitespace-pre`}
-                style={{ lineHeight: '20px' }} // HARD SYNC WITH LINE NUMBERS
+                style={{ lineHeight: '20px' }} 
                 placeholder={isTerminal ? "// Type code here..." : "Start writing..."}
                 spellCheck={false}
                 autoFocus
@@ -338,7 +330,6 @@ const EditorModal = ({ note, isTerminal, onClose, onSave }) => {
   );
 };
 
-// ... (DeleteConfirmModal & SelectionBar unchanged, included in final output logic) ...
 const DeleteConfirmModal = ({ isOpen, count, onConfirm, onCancel, isTerminal }) => {
   if (!isOpen) return null;
   return (
@@ -363,7 +354,7 @@ const DeleteConfirmModal = ({ isOpen, count, onConfirm, onCancel, isTerminal }) 
 };
 
 const SelectionBar = ({ isTerminal, selectedCount, onCancel, onDelete, onMove, canMove }) => (
-    <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 p-2 px-4 rounded-full shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-300 ${isTerminal ? 'bg-[#161b22] border border-[#30363d] text-white' : 'bg-white border border-gray-200 text-black'}`}>
+    <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 p-2 px-4 rounded-full shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-300 ${isTerminal ? 'bg-[#161b22] border border-[#30363d] text-white' : 'bg-white border border-gray-200 text-black shadow-lg'}`}>
         <div className="font-bold text-xs pr-2 border-r border-current border-opacity-20">{selectedCount} Selected</div>
         <button onClick={onDelete} className="p-2 hover:text-red-500 transition-colors flex flex-col items-center gap-0.5"><Trash2 size={16} /></button>
         {canMove && <button onClick={onMove} className="p-2 hover:text-yellow-500 transition-colors flex flex-col items-center gap-0.5"><Move size={16} /></button>}
@@ -393,7 +384,7 @@ export default function DesnoteAppV7() {
   // Persistence
   useEffect(() => { localStorage.setItem('desnote_folders_v7', JSON.stringify(folders)); localStorage.setItem('desnote_root_v7', JSON.stringify(rootNotes)); }, [folders, rootNotes]);
 
-  // Logic Functions (Keep same as before for brevity, logic unchanged)
+  // Logic Functions
   const toggleSelectionMode = () => { setIsSelectionMode(!isSelectionMode); setSelectedIds(new Set()); };
   const toggleSelectItem = (id) => { const newSet = new Set(selectedIds); if (newSet.has(id)) newSet.delete(id); else newSet.add(id); setSelectedIds(newSet); };
   const isOnlyNotesSelected = useMemo(() => { if (selectedIds.size === 0) return false; return !Array.from(selectedIds).some(id => folders.find(f => f.id === id)); }, [selectedIds, folders]);
@@ -436,7 +427,7 @@ export default function DesnoteAppV7() {
     setActiveNote(prev => ({ ...prev, content }));
   };
   
-  // --- SPATIAL GRID LOGIC (UPDATED) ---
+  // --- SPATIAL GRID LOGIC ---
   const combinedItems = useMemo(() => {
     let items = [];
     if (viewMode === 'ALL' || viewMode === 'FOLDER') items.push(...folders.map(f => ({ type: 'FOLDER', data: f })));
@@ -444,42 +435,39 @@ export default function DesnoteAppV7() {
     return items;
   }, [folders, rootNotes, viewMode]);
 
-  // STYLING
   const isTerminal = theme === 'dark';
   const bgClass = isTerminal ? 'bg-[#0d1117]' : 'bg-[#f6f8fa]';
-  const textClass = isTerminal ? 'text-[#e6edf3]' : 'text-[#24292f]';
-  const modalBg = isTerminal ? 'bg-[#161b22] border border-[#30363d] text-[#e6edf3]' : 'bg-white border border-[#d0d7de] text-[#24292f] shadow-xl rounded-lg';
+  const textClass = isTerminal ? 'text-[#e6edf3]' : 'text-[#1f2328]';
+  const modalBg = isTerminal ? 'bg-[#161b22] border border-[#30363d] text-[#e6edf3]' : 'bg-white border border-[#d0d7de] text-[#1f2328] shadow-xl rounded-lg';
 
   return (
     <div className={`min-h-screen w-full relative flex flex-col ${bgClass} ${textClass} font-mono transition-colors duration-500 overflow-hidden`}>
       <GlobalStyles />
       {isTerminal && <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.02]" style={{ backgroundImage: 'linear-gradient(#30363d 1px, transparent 1px), linear-gradient(90deg, #30363d 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>}
 
-      {/* HEADER & STATUS (Simplified for brevity, same as previous) */}
-      <div className={`w-full flex items-center justify-between py-1 px-3 text-[9px] border-b select-none ${isTerminal ? 'bg-[#0d1117] border-[#30363d] text-[#8b949e]' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
+      <div className={`w-full flex items-center justify-between py-1 px-3 text-[9px] font-mono border-b select-none ${isTerminal ? 'bg-[#0d1117] border-[#30363d] text-[#8b949e]' : 'bg-gray-100 border-gray-200 text-gray-500'}`}>
         <div className="flex gap-3"><span className="flex items-center gap-1 font-bold text-[#3fb950]"><Terminal size={10}/> <Typewriter text="root@desnote:~" speed={30} triggerKey={refreshKey} /></span></div>
         <div className="flex gap-3 items-center"><span className="uppercase tracking-widest opacity-50 flex gap-1">FILTER: <Typewriter text={viewMode} speed={50} triggerKey={refreshKey} /></span><span className="flex items-center gap-1 text-[#58a6ff]"><GitBranch size={10}/> main</span><span className="flex items-center gap-1"><Clock size={10}/> {getFormattedTime()}</span></div>
       </div>
 
-      <header className={`px-4 py-3 flex flex-col gap-3 z-10 sticky top-0 ${isTerminal ? 'bg-[#0d1117]/95 border-b border-[#30363d]' : 'bg-white/90 backdrop-blur shadow-sm'}`}>
+      <header className={`px-4 py-3 flex flex-col gap-3 z-10 sticky top-0 ${isTerminal ? 'bg-[#0d1117]/95 border-b border-[#30363d]' : 'bg-[#f6f8fa]/90 border-b border-[#d0d7de] backdrop-blur shadow-sm'}`}>
         <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">{isTerminal ? <Terminal className="text-[#e6edf3]" size={18} /> : <Github className="text-black" size={18} />}<h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v8.2</span></h1></div>
+            <div className="flex items-center gap-2">{isTerminal ? <Terminal className="text-[#e6edf3]" size={18} /> : <Github className="text-black" size={18} />}<h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v8.3</span></h1></div>
             <div className="flex items-center gap-3">
-              <button onClick={toggleSelectionMode} className={`px-3 py-1.5 rounded-md text-[10px] font-bold border transition-all ${isSelectionMode ? (isTerminal ? 'bg-[#238636] border-[#3fb950] text-white' : 'bg-blue-600 border-blue-600 text-white') : (isTerminal ? 'border-[#30363d] hover:border-[#8b949e]' : 'border-gray-300 hover:border-gray-400')}`}>{isSelectionMode ? 'DONE' : '[ SELECT ]'}</button>
+              <button onClick={toggleSelectionMode} className={`px-3 py-1.5 rounded-md text-[10px] font-bold border transition-all ${isSelectionMode ? (isTerminal ? 'bg-[#238636] border-[#3fb950] text-white' : 'bg-blue-600 border-blue-600 text-white') : (isTerminal ? 'border-[#30363d] hover:border-[#8b949e]' : 'bg-white border-[#d0d7de] hover:border-[#b1bac4]')}`}>{isSelectionMode ? 'DONE' : '[ SELECT ]'}</button>
               <button onClick={() => setSettingsOpen(true)} className="p-1.5 rounded-md hover:bg-current hover:bg-opacity-10 transition-colors flash-active"><Settings size={16} /></button>
             </div>
         </div>
         {!searchQuery && (
           <div className="flex gap-2 w-full overflow-x-auto pb-1 scrollbar-none items-center">
-             <button onClick={() => toggleViewMode('FOLDER')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] transition-all select-none flash-active ${viewMode === 'FOLDER' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-gray-200 text-gray-500')}`}><Folder size={12}/> <span className="font-bold">FOLDERS</span> <span className="opacity-50">{folders.length}</span></button>
-             <button onClick={() => toggleViewMode('NOTE')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] transition-all select-none flash-active ${viewMode === 'NOTE' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-gray-200 text-gray-500')}`}><FileText size={12}/> <span className="font-bold">NOTES</span> <span className="opacity-50">{rootNotes.length}</span></button>
-             <button onClick={() => toggleViewMode('ALL')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] transition-all select-none flash-active ${viewMode === 'ALL' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-gray-200 text-gray-500')}`}><Disc size={12}/> <span className="font-bold">ALL</span></button>
+             <button onClick={() => toggleViewMode('FOLDER')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] transition-all select-none flash-active ${viewMode === 'FOLDER' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-[#d0d7de] text-[#57606a]')}`}><Folder size={12}/> <span className="font-bold">FOLDERS</span> <span className="opacity-50">{folders.length}</span></button>
+             <button onClick={() => toggleViewMode('NOTE')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] transition-all select-none flash-active ${viewMode === 'NOTE' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-[#d0d7de] text-[#57606a]')}`}><FileText size={12}/> <span className="font-bold">NOTES</span> <span className="opacity-50">{rootNotes.length}</span></button>
+             <button onClick={() => toggleViewMode('ALL')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] transition-all select-none flash-active ${viewMode === 'ALL' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-[#d0d7de] text-[#57606a]')}`}><Disc size={12}/> <span className="font-bold">ALL</span></button>
           </div>
         )}
-        <div className={`relative w-full group`}><div className={`absolute left-3 top-1/2 -translate-y-1/2 opacity-50 font-mono text-xs flex items-center gap-1`}><Command size={12}/> {">"}</div><input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="grep..." className={`w-full py-2 pl-12 pr-4 text-xs bg-transparent border rounded-md outline-none transition-all font-mono ${isTerminal ? 'border-[#30363d] focus:border-[#58a6ff] placeholder-[#8b949e] bg-[#010409]' : 'border-gray-300 bg-gray-50 focus:bg-white focus:border-blue-500'}`}/></div>
+        <div className={`relative w-full group`}><div className={`absolute left-3 top-1/2 -translate-y-1/2 opacity-50 font-mono text-xs flex items-center gap-1`}><Command size={12}/> {">"}</div><input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="grep..." className={`w-full py-2 pl-12 pr-4 text-xs bg-transparent border rounded-md outline-none transition-all font-mono ${isTerminal ? 'border-[#30363d] focus:border-[#58a6ff] placeholder-[#8b949e] bg-[#010409]' : 'border-[#d0d7de] bg-white focus:border-blue-500 placeholder-gray-400'}`}/></div>
       </header>
 
-      {/* MAIN GRID LAYOUT - CSS GRID FOR SPANNING LOGIC */}
       <main className="flex-1 overflow-y-auto p-4 pb-32 custom-scrollbar z-0">
         <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-min dense`}>
             {combinedItems.filter(item => {
@@ -529,11 +517,9 @@ export default function DesnoteAppV7() {
         {combinedItems.length === 0 && <div className="flex flex-col items-center justify-center py-20 opacity-30 text-xs font-mono gap-4"><Terminal size={32} /><div>// EMPTY_VIEW: {viewMode}</div></div>}
       </main>
 
-      {/* SELECTION BAR & FAB */}
       {isSelectionMode && selectedIds.size > 0 && <SelectionBar isTerminal={isTerminal} selectedCount={selectedIds.size} onCancel={toggleSelectionMode} onDelete={handleBulkDelete} onMove={handleBulkMove} canMove={isOnlyNotesSelected} />}
-      {!isSelectionMode && <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">{addMenuOpen && <div className="flex flex-col gap-2 animate-in slide-in-from-bottom-4 fade-in duration-200 pointer-events-auto"><button onClick={() => setCreateModal({isOpen: true, type: 'NOTE'})} className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-xs font-bold tracking-wider uppercase transition-transform hover:scale-105 ${isTerminal ? 'bg-[#238636] text-white' : 'bg-white text-gray-800'}`}><FileText size={16} /> Note</button><button onClick={() => setCreateModal({isOpen: true, type: 'FOLDER'})} className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-xs font-bold tracking-wider uppercase transition-transform hover:scale-105 ${isTerminal ? 'bg-[#1f6feb] text-white' : 'bg-white text-gray-800'}`}><Folder size={16} /> Folder</button></div>}<button onClick={() => setAddMenuOpen(!addMenuOpen)} className={`pointer-events-auto h-12 w-12 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-90 ${addMenuOpen ? 'rotate-45 bg-red-500' : ''} ${isTerminal ? 'bg-[#3fb950] text-black hover:bg-[#2ea043]' : 'bg-blue-600 text-white hover:bg-blue-700'}`}><Plus size={24} strokeWidth={3} /></button></div>}
+      {!isSelectionMode && <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">{addMenuOpen && <div className="flex flex-col gap-2 animate-in slide-in-from-bottom-4 fade-in duration-200 pointer-events-auto"><button onClick={() => setCreateModal({isOpen: true, type: 'NOTE'})} className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-xs font-bold tracking-wider uppercase transition-transform hover:scale-105 ${isTerminal ? 'bg-[#238636] text-white' : 'bg-blue-600 text-white'}`}><FileText size={16} /> Note</button><button onClick={() => setCreateModal({isOpen: true, type: 'FOLDER'})} className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-xs font-bold tracking-wider uppercase transition-transform hover:scale-105 ${isTerminal ? 'bg-[#1f6feb] text-white' : 'bg-white border border-[#d0d7de] text-gray-800'}`}><Folder size={16} /> Folder</button></div>}<button onClick={() => setAddMenuOpen(!addMenuOpen)} className={`pointer-events-auto h-12 w-12 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-90 ${addMenuOpen ? 'rotate-45 bg-red-500' : ''} ${isTerminal ? 'bg-[#3fb950] text-black hover:bg-[#2ea043]' : 'bg-blue-600 text-white hover:bg-blue-700'}`}><Plus size={24} strokeWidth={3} /></button></div>}
 
-      {/* MODALS */}
       {createModal.isOpen && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"><div className={`w-full max-w-sm p-6 ${modalBg} flex flex-col gap-4 shadow-2xl border-t-4 ${isTerminal ? 'border-t-[#3fb950]' : 'border-t-blue-500'}`}><h3 className="font-bold text-lg uppercase tracking-widest font-mono">NEW_{createModal.type}</h3><input autoFocus placeholder="Enter name..." className="p-3 bg-transparent border rounded outline-none focus:ring-2 ring-opacity-50 ring-current transition-all font-mono" onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(e.target.value) }} onBlur={(e) => handleCreate(e.target.value)} /><button onClick={() => setCreateModal({isOpen: false, type: null})} className="text-xs opacity-50 hover:opacity-100 mt-2 font-mono">CANCEL (Tap outside)</button></div></div>}
       <DeleteConfirmModal isOpen={deleteModal.isOpen} count={deleteModal.count} onConfirm={confirmBulkDelete} onCancel={() => setDeleteModal({ ...deleteModal, isOpen: false })} isTerminal={isTerminal} />
       {moveModal.isOpen && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"><div className={`w-full max-w-sm p-6 ${modalBg} flex flex-col gap-4 max-h-[80vh] font-mono`}><h3 className="font-bold border-b border-opacity-20 border-current pb-2">mv SOURCE TARGET</h3><div className="flex flex-col gap-2 overflow-y-auto custom-scrollbar flex-1"><button onClick={() => executeBulkMove('ROOT')} className="p-3 text-left border border-opacity-20 border-current rounded font-bold flex items-center gap-2 hover:bg-current hover:bg-opacity-10 text-xs flash-active"><LayoutGrid size={14}/> ./root</button>{folders.map(f => (<button key={f.id} onClick={() => executeBulkMove(f.id)} className="p-3 text-left border border-opacity-20 border-current rounded flex items-center gap-2 hover:bg-current hover:bg-opacity-10 text-xs flash-active"><Folder size={14}/> {f.name}</button>))}</div><button onClick={() => setMoveModal({...moveModal, isOpen: false})} className="py-2 opacity-50 hover:opacity-100 text-xs flash-active">ABORT_OPERATION</button></div></div>}
