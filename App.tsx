@@ -14,10 +14,10 @@ const getFormattedTime = () => new Date().toLocaleTimeString('en-US', { hour12: 
 const initialFolders = [
   {
     id: 'folder-1',
-    name: '~/skripsi/sejarah_lisan_indonesia_final_draft',
+    name: '~/skripsi/sejarah_lisan_indonesia_final_draft_revisi_dosen_pembimbing',
     isExpanded: false,
     notes: [
-      { id: 'note-1', title: 'wawancara_pak_hartono_mei_98.md', content: 'Narasumber utama untuk bab 3. Punya arsip foto 98. Beliau bilang kalau arsip itu harus dijaga baik-baik karena bukti sejarah yang otentik tidak bisa dipalsukan begitu saja.', isPeeked: false },
+      { id: 'note-1', title: 'wawancara_pak_hartono_mei_98_full_transcript.md', content: 'Narasumber utama untuk bab 3. Punya arsip foto 98. Beliau bilang kalau arsip itu harus dijaga baik-baik karena bukti sejarah yang otentik tidak bisa dipalsukan begitu saja.', isPeeked: false },
     ]
   },
   {
@@ -25,31 +25,32 @@ const initialFolders = [
     name: '~/kuliah/filsafat',
     isExpanded: true,
     notes: [
-        { id: 'note-f1', title: 'stoikisme_intro.txt', content: 'Fokus pada apa yang bisa dikendalikan. Abaikan opini orang lain. Hidup itu bukan tentang apa yang terjadi padamu, tapi bagaimana kamu bereaksi terhadapnya.', isPeeked: false }
+        { id: 'note-f1', title: 'stoikisme_intro_marcus_aurelius.txt', content: 'Fokus pada apa yang bisa dikendalikan. Abaikan opini orang lain. Hidup itu bukan tentang apa yang terjadi padamu, tapi bagaimana kamu bereaksi terhadapnya.', isPeeked: false }
     ]
   }
 ];
 
 const initialRootNotes = [
-  { id: 'root-1', title: 'ide_lukisan_cyberpunk.txt', content: 'Konsep: Cyberpunk Jakarta. Canvas 40x60. Acrylic. Warna dominan neon pink dan cyan, tapi ada sentuhan kearifan lokal seperti gerobak nasgor yang terbang.', isPeeked: false },
-  { id: 'root-2', title: 'grocery_list_unj.list', content: '1. Rokok Ziga\n2. Kopi Hitam Kantin Blok M\n3. Kertas A3\n4. Cat Minyak\n5. Kuas nomor 12', isPeeked: false },
+  { id: 'root-1', title: 'ide_lukisan_cyberpunk_2077_jakarta_barat.txt', content: 'Konsep: Cyberpunk Jakarta. Canvas 40x60. Acrylic. Warna dominan neon pink dan cyan, tapi ada sentuhan kearifan lokal seperti gerobak nasgor yang terbang.', isPeeked: false },
+  { id: 'root-2', title: 'grocery_list_unj_kantin_blok_m.list', content: '1. Rokok Ziga\n2. Kopi Hitam Kantin Blok M\n3. Kertas A3\n4. Cat Minyak\n5. Kuas nomor 12', isPeeked: false },
 ];
 
-// --- SMART TYPEWRITER ---
-const Typewriter = ({ text, speed = 20, delay = 0, triggerKey = null }) => {
-  const [displayed, setDisplayed] = useState(text); 
+// --- SMART TYPEWRITER (CRASH PROOF) ---
+const Typewriter = ({ text = "", speed = 20, delay = 0, triggerKey = null }) => {
+  const safeText = text || ""; // Anti-Crash: Ensure string
+  const [displayed, setDisplayed] = useState(safeText); 
   const [isCursorVisible, setIsCursorVisible] = useState(false);
   
   const hasTyped = useRef(false);
   const prevTrigger = useRef(triggerKey);
-  const prevText = useRef(text);
+  const prevText = useRef(safeText);
 
   useEffect(() => {
-    if (prevText.current === text && prevTrigger.current === triggerKey && hasTyped.current) return;
+    if (prevText.current === safeText && prevTrigger.current === triggerKey && hasTyped.current) return;
 
     hasTyped.current = true;
     prevTrigger.current = triggerKey;
-    prevText.current = text;
+    prevText.current = safeText;
 
     setDisplayed('');
     setIsCursorVisible(true);
@@ -60,8 +61,8 @@ const Typewriter = ({ text, speed = 20, delay = 0, triggerKey = null }) => {
 
     const runTyping = () => {
         timer = setInterval(() => {
-            if (i < text.length) {
-                setDisplayed(text.substring(0, i + 1));
+            if (i < safeText.length) {
+                setDisplayed(safeText.substring(0, i + 1));
                 i++;
             } else {
                 clearInterval(timer);
@@ -76,7 +77,7 @@ const Typewriter = ({ text, speed = 20, delay = 0, triggerKey = null }) => {
         clearTimeout(delayTimeout);
         if(timer) clearInterval(timer);
     };
-  }, [text, triggerKey, speed]);
+  }, [safeText, triggerKey, speed]);
 
   return (
     <span>
@@ -98,18 +99,11 @@ const GlobalStyles = () => (
     ::selection { background: rgba(63, 185, 80, 0.99); color: black; }
 
     @keyframes flash {
-      0% { background-color: rgba(63, 185, 80, 0.8); }
+      0% { background-color: rgba(63, 185, 80, 0.3); }
       100% { background-color: transparent; }
     }
     .flash-active:active { animation: flash 0.1s ease-out; }
     
-    /* Utility for line clamping */
-    .line-clamp-2 {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
     .line-clamp-3 {
       display: -webkit-box;
       -webkit-line-clamp: 3;
@@ -119,12 +113,13 @@ const GlobalStyles = () => (
   `}</style>
 );
 
-// --- HELPER: Editor Stats ---
+// --- HELPER: Editor Stats (CRASH PROOF) ---
 const getEditorStats = (text) => {
-    const chars = text.length;
-    const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
-    const lines = text.split('\n').length;
-    const sentences = text.split(/[.!?]+/).filter(Boolean).length;
+    const safeText = text || "";
+    const chars = safeText.length;
+    const words = safeText.trim() === '' ? 0 : safeText.trim().split(/\s+/).length;
+    const lines = safeText.split('\n').length;
+    const sentences = safeText.split(/[.!?]+/).filter(Boolean).length;
     return { chars, words, lines, sentences };
 };
 
@@ -133,7 +128,7 @@ const getEditorStats = (text) => {
 const SelectionCheckbox = ({ isSelected, onToggle, isTerminal }) => (
     <div 
         onClick={(e) => { e.stopPropagation(); onToggle(); }}
-        className={`shrink-0 mr-3 cursor-pointer transition-all duration-200 ${isSelected ? 'scale-110' : 'opacity-50 hover:opacity-100'}`}
+        className={`shrink-0 mr-3 cursor-pointer transition-all duration-200 z-20 ${isSelected ? 'scale-110' : 'opacity-50 hover:opacity-100'}`}
     >
         {isSelected 
             ? <div className={`p-0.5 rounded ${isTerminal ? 'bg-[#3fb950] text-black' : 'bg-blue-600 text-white'}`}><Check size={14} strokeWidth={4} /></div>
@@ -163,25 +158,26 @@ const NoteCard = ({ note, isTerminal, onOpen, onPeek, refreshKey, isSelectionMod
         className={`relative flex flex-col ${cardClass} h-auto overflow-hidden group w-full rounded-sm transition-all duration-200 ${isSelected ? 'translate-x-1' : ''}`}
         onClick={handleCardClick}
     >
-       <div className={`flex items-start p-3 border-b ${isTerminal ? 'bg-[#161b22] border-[#30363d]' : 'bg-gray-50 border-[#d0d7de]'} border-opacity-50 min-h-[50px]`}>
+       {/* HEADER + TITLE (ALWAYS VISIBLE) */}
+       <div className={`flex items-start p-3 border-b ${isTerminal ? 'bg-[#161b22] border-[#30363d]' : 'bg-gray-50 border-[#d0d7de]'} border-opacity-50 min-h-[60px] flash-active cursor-pointer`}>
           
           {isSelectionMode && <SelectionCheckbox isSelected={isSelected} onToggle={onToggleSelect} isTerminal={isTerminal} />}
 
           <div className="flex-1 overflow-hidden">
              <div className="flex items-center gap-2 mb-1">
                 <FileText size={12} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-500'} />
-                <span className={`font-bold text-[11px] font-mono uppercase tracking-wide opacity-50`}>FILE</span>
+                <span className={`font-bold text-[10px] font-mono uppercase tracking-wide opacity-50`}>DOC</span>
              </div>
-             {/* MULTI LINE TITLE */}
-             <span className={`font-bold text-xs font-mono leading-tight line-clamp-3 ${isTerminal ? 'text-[#e6edf3]' : 'text-gray-800'}`}>
+             {/* CLEAN TITLE ONLY - MULTI LINE */}
+             <span className={`font-bold text-xs font-mono leading-snug line-clamp-3 ${isTerminal ? 'text-[#e6edf3]' : 'text-gray-800'}`}>
                 <Typewriter text={note.title} speed={10} triggerKey={refreshKey} />
              </span>
           </div>
        </div>
 
-       {/* BODY: Only show if PEEKED */}
+       {/* PEEK CONTENT - ONLY IF PEEKED */}
        {note.isPeeked && (
-           <div className="p-3 cursor-pointer flex-1 hover:bg-current hover:bg-opacity-5 transition-colors flash-active">
+           <div className="p-3 cursor-pointer flex-1 hover:bg-current hover:bg-opacity-5 transition-colors flash-active" onClick={(e) => { e.stopPropagation(); onOpen(); }}>
               <div className={`text-[10px] leading-relaxed font-mono ${isTerminal ? 'text-[#8b949e]' : 'text-gray-600'}`}>
                   <div className={`pl-2 py-1 border-l-2 ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'}`}>
                     <Typewriter text={getPeekContent(note.content)} speed={5} triggerKey={note.isPeeked} />
@@ -190,11 +186,11 @@ const NoteCard = ({ note, isTerminal, onOpen, onPeek, refreshKey, isSelectionMod
            </div>
        )}
 
-       {/* PEEK TOGGLE - Only visible if not in selection mode */}
+       {/* PEEK TOGGLE */}
        {!isSelectionMode && (
            <button 
              onClick={(e) => { e.stopPropagation(); onPeek(); }}
-             className={`w-full py-1.5 flex items-center justify-center border-t ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50 text-[9px] font-bold uppercase tracking-wider transition-colors opacity-50 hover:opacity-100 bg-transparent flash-active`}
+             className={`w-full py-1.5 flex items-center justify-center border-t ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50 text-[9px] font-bold uppercase tracking-wider transition-colors opacity-50 hover:opacity-100 bg-transparent flash-active z-10`}
            >
               {note.isPeeked ? '[ CLOSE_STREAM ]' : '[ SCAN_DATA ]'}
            </button>
@@ -223,11 +219,12 @@ const FolderCard = ({ folder, isTerminal, onToggle, onMoveNote, onDeleteNote, on
 
         <div className="flex-1 flex items-start gap-2 overflow-hidden">
            <Folder size={16} className={`mt-0.5 ${isTerminal ? 'text-[#3fb950]' : 'text-yellow-500'}`} />
-           <div className="flex flex-col gap-0.5 w-full">
-             <span className={`font-bold text-xs font-mono leading-tight line-clamp-2 ${isTerminal ? 'text-[#e6edf3]' : 'text-gray-800'}`}>
+           <div className="flex flex-col gap-1 w-full">
+             {/* FOLDER NAME - MULTI LINE */}
+             <span className={`font-bold text-xs font-mono leading-snug line-clamp-3 ${isTerminal ? 'text-[#e6edf3]' : 'text-gray-800'}`}>
                 <Typewriter text={folder.name} speed={15} triggerKey={refreshKey} />
              </span>
-             <span className="text-[9px] opacity-40 font-mono">DIR_SIZE: {folder.notes.length}</span>
+             {!folder.isExpanded && <span className="text-[9px] opacity-40 font-mono">SIZE: {folder.notes.length} ITEMS</span>}
            </div>
         </div>
         
@@ -268,13 +265,16 @@ const FolderCard = ({ folder, isTerminal, onToggle, onMoveNote, onDeleteNote, on
 
                  {/* SUB-ITEM PEEK */}
                  {!isSelectionMode && note.isPeeked && (
-                   <div className={`mx-2 mb-2 mt-1 pl-2 py-1 border-l-2 text-[9px] font-mono whitespace-pre-wrap ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'}`}>
+                   <div 
+                     className={`mx-2 mb-2 mt-1 pl-2 py-1 border-l-2 text-[9px] font-mono whitespace-pre-wrap cursor-pointer ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'}`}
+                     onClick={() => onOpenNote(note)}
+                   >
                      <Typewriter text={note.content ? note.content.substring(0, 100) + "..." : "Empty..."} speed={5} triggerKey={note.isPeeked} />
                    </div>
                  )}
                  {!isSelectionMode && (
                      <button onClick={() => onPeekNote(note.id)} className="w-full py-0.5 bg-black/5 hover:bg-black/10 text-[8px] text-center opacity-40 uppercase tracking-widest hover:opacity-100 transition-opacity flash-active">
-                       {note.isPeeked ? '[ - ]' : '[ + ]'}
+                       {note.isPeeked ? '[ COLLAPSE ]' : '[ PEEK ]'}
                      </button>
                  )}
                </div>
@@ -585,6 +585,32 @@ export default function DesnoteAppV7() {
     setActiveNote(prev => ({ ...prev, content }));
   };
 
+  // --- MOVE LOGIC ---
+  const openMoveModal = (sourceId, noteId, isFromRoot) => {
+    setMoveModal({ isOpen: true, noteId, sourceId, isFromRoot });
+  };
+
+  const executeMove = (targetId) => {
+    const { sourceId, noteId, isFromRoot } = moveModal;
+    let noteToMove = null;
+
+    if (isFromRoot) {
+      noteToMove = rootNotes.find(n => n.id === noteId);
+      setRootNotes(rootNotes.filter(n => n.id !== noteId));
+    } else {
+      const sourceFolder = folders.find(f => f.id === sourceId);
+      noteToMove = sourceFolder.notes.find(n => n.id === noteId);
+      setFolders(folders.map(f => f.id === sourceId ? { ...f, notes: f.notes.filter(n => n.id !== noteId) } : f));
+    }
+    noteToMove = { ...noteToMove, isPeeked: false }; 
+    if (targetId === 'ROOT') {
+      setRootNotes(prev => [...prev, noteToMove]);
+    } else {
+      setFolders(prev => prev.map(f => f.id === targetId ? { ...f, notes: [...f.notes, noteToMove] } : f));
+    }
+    setMoveModal({ isOpen: false, noteId: null, sourceId: null, isFromRoot: false });
+  };
+
   // --- IMPORT/EXPORT ---
   const handleExport = () => {
     const data = { version: "v8", timestamp: new Date().toISOString(), folders, rootNotes };
@@ -666,14 +692,30 @@ export default function DesnoteAppV7() {
         </div>
       )}
 
-      <SystemStatus isTerminal={isTerminal} viewMode={viewMode} refreshKey={refreshKey} />
+      {/* SYSTEM STATUS */}
+      <div className={`w-full flex items-center justify-between py-1 px-3 text-[9px] font-mono border-b select-none ${isTerminal ? 'bg-[#0d1117] border-[#30363d] text-[#8b949e]' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
+        <div className="flex gap-3">
+          <span className="flex items-center gap-1 font-bold text-[#3fb950]">
+            <Terminal size={10}/> 
+            <Typewriter text="root@desnote:~" speed={30} triggerKey={refreshKey} />
+          </span>
+          <span className="flex items-center gap-1 opacity-50"><Cpu size={10}/> 12%</span>
+        </div>
+        <div className="flex gap-3 items-center">
+           <span className="uppercase tracking-widest opacity-50 flex gap-1">
+             FILTER: <Typewriter text={viewMode} speed={50} triggerKey={refreshKey} />
+           </span>
+           <span className="flex items-center gap-1 text-[#58a6ff]"><GitBranch size={10}/> main</span>
+           <span className="flex items-center gap-1"><Clock size={10}/> {getFormattedTime()}</span>
+        </div>
+      </div>
 
       {/* HEADER */}
       <header className={`px-4 py-3 flex flex-col gap-3 z-10 sticky top-0 ${isTerminal ? 'bg-[#0d1117]/95 border-b border-[#30363d]' : 'bg-white/90 backdrop-blur shadow-sm'}`}>
         <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
                 {isTerminal ? <Terminal className="text-[#e6edf3]" size={18} /> : <Github className="text-black" size={18} />}
-                <h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v8.0</span></h1>
+                <h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v8.1</span></h1>
             </div>
             <div className="flex items-center gap-3">
               {/* SELECT MODE TOGGLE */}
@@ -692,9 +734,15 @@ export default function DesnoteAppV7() {
         {/* FILTER BUTTONS */}
         {!searchQuery && (
           <div className="flex gap-2 w-full overflow-x-auto pb-1 scrollbar-none items-center">
-            <StatsButton icon={Folder} label="FOLDERS" value={folders.length} isTerminal={isTerminal} colorClass="text-blue-500" onClick={() => toggleViewMode('FOLDER')} isActive={viewMode === 'FOLDER'} refreshKey={refreshKey} />
-            <StatsButton icon={FileText} label="NOTES" value={rootNotes.length} isTerminal={isTerminal} colorClass="text-green-500" onClick={() => toggleViewMode('NOTE')} isActive={viewMode === 'NOTE'} refreshKey={refreshKey} />
-             <StatsButton icon={Disc} label="ALL" isTerminal={isTerminal} colorClass="text-yellow-500" onClick={() => toggleViewMode('ALL')} isActive={viewMode === 'ALL'} refreshKey={refreshKey} />
+             <button onClick={() => toggleViewMode('FOLDER')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] font-mono transition-all select-none flash-active ${viewMode === 'FOLDER' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-gray-200 text-gray-500')}`}>
+                <Folder size={12}/> <span className="font-bold">FOLDERS</span> <span className="opacity-50">{folders.length}</span>
+             </button>
+             <button onClick={() => toggleViewMode('NOTE')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] font-mono transition-all select-none flash-active ${viewMode === 'NOTE' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-gray-200 text-gray-500')}`}>
+                <FileText size={12}/> <span className="font-bold">NOTES</span> <span className="opacity-50">{rootNotes.length}</span>
+             </button>
+             <button onClick={() => toggleViewMode('ALL')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] font-mono transition-all select-none flash-active ${viewMode === 'ALL' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-gray-200 text-gray-500')}`}>
+                <Disc size={12}/> <span className="font-bold">ALL</span>
+             </button>
           </div>
         )}
 
