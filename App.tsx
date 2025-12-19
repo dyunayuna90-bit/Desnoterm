@@ -3,8 +3,8 @@ import {
   Folder, FileText, ChevronDown, ChevronRight, Plus, 
   Settings, Moon, Sun, X, Save, Move, Trash2, Terminal, Github, 
   Search, LayoutGrid, AlertTriangle,
-  Download, Upload, Cpu, GitBranch, Command, Clock, Disc, 
-  CheckSquare, Square, Check, AlignLeft, Type, Hash
+  Download, Upload, GitBranch, Command, Clock, Disc, 
+  Check, AlignLeft, Type, Hash, Square
 } from 'lucide-react';
 
 // --- DATA INITIALIZATION ---
@@ -25,13 +25,13 @@ const initialFolders = [
     name: '~/kuliah/filsafat',
     isExpanded: true,
     notes: [
-        { id: 'note-f1', title: 'stoikisme_intro_marcus_aurelius.txt', content: 'Fokus pada apa yang bisa dikendalikan. Abaikan opini orang lain.', isPeeked: false }
+        { id: 'note-f1', title: 'stoikisme_intro_marcus_aurelius.txt', content: 'Fokus pada apa yang bisa dikendalikan. Abaikan opini orang lain.\n\nJangan biarkan masa depan mengganggumu. Kamu akan menghadapinya, jika memang harus, dengan senjata nalar yang sama yang hari ini membekalimu melawan masa kini.', isPeeked: false }
     ]
   }
 ];
 
 const initialRootNotes = [
-  { id: 'root-1', title: 'ide_lukisan_cyberpunk_2077.txt', content: 'Konsep: Cyberpunk Jakarta. Canvas 40x60. Acrylic.', isPeeked: false },
+  { id: 'root-1', title: 'ide_lukisan_cyberpunk_2077.txt', content: 'Konsep: Cyberpunk Jakarta. Canvas 40x60. Acrylic.\nRef: Blade Runner lighting, tapi setting di Glodok.', isPeeked: false },
   { id: 'root-2', title: 'grocery_list_unj_kantin.list', content: '1. Rokok Ziga\n2. Kopi Hitam\n3. Kertas A3\n4. Cat Minyak', isPeeked: false },
 ];
 
@@ -90,14 +90,15 @@ const Typewriter = ({ text = "", speed = 20, delay = 0, triggerKey = null }) => 
 // --- GLOBAL STYLES ---
 const GlobalStyles = () => (
   <style>{`
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #58a6ff; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(139, 148, 158, 0.2); border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(139, 148, 158, 0.4); }
     
     textarea, input { caret-color: #3fb950; caret-shape: block; }
     ::selection { background: rgba(63, 185, 80, 0.99); color: black; }
 
+    /* Animasi Flash pas klik */
     @keyframes flash {
       0% { background-color: rgba(63, 185, 80, 0.3); }
       100% { background-color: transparent; }
@@ -130,17 +131,20 @@ const SelectionCheckbox = ({ isSelected, onToggle, isTerminal }) => (
         className={`shrink-0 mr-3 cursor-pointer transition-all duration-200 z-20 ${isSelected ? 'scale-110' : 'opacity-50 hover:opacity-100'}`}
     >
         {isSelected 
-            ? <div className={`p-0.5 rounded ${isTerminal ? 'bg-[#3fb950] text-black' : 'bg-blue-600 text-white'}`}><Check size={14} strokeWidth={4} /></div>
+            ? <div className={`p-0.5 rounded ${isTerminal ? 'bg-[#3fb950] text-black' : 'bg-[#24292f] text-white'}`}><Check size={14} strokeWidth={4} /></div>
             : <Square size={18} className={isTerminal ? 'text-[#8b949e]' : 'text-gray-400'} />
         }
     </div>
 );
 
 const NoteCard = ({ note, isTerminal, onOpen, onPeek, refreshKey, isSelectionMode, isSelected, onToggleSelect }) => {
-  // IMPROVED LIGHT MODE: Stronger border, better shadow
-  const cardClass = isTerminal 
-    ? `bg-[#0d1117] border ${isSelected ? 'border-[#3fb950]' : 'border-[#30363d]'} hover:border-[#8b949e]` 
-    : `bg-white border ${isSelected ? 'border-blue-500 ring-1 ring-blue-500' : 'border-[#d0d7de]'} hover:border-[#8c959f] shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:shadow-md`;
+  // --- TAMPILAN LIGHT MODE DIPERBAIKI DISINI ---
+  // Kita pake shadow yang lebih nendang dan border yang clean
+  const terminalClass = `bg-[#0d1117] border ${isSelected ? 'border-[#3fb950]' : 'border-[#30363d]'} hover:border-[#8b949e]`;
+  // Light mode: Shadow agak dalem (shadow-md) + border halus + bg white
+  const lightClass = `bg-white border ${isSelected ? 'border-black ring-1 ring-black' : 'border-[#d0d7de]'} hover:border-[#b1bac4] shadow-[0_3px_6px_rgba(140,149,159,0.15)] hover:shadow-[0_8px_24px_rgba(140,149,159,0.2)] hover:-translate-y-0.5`;
+
+  const cardClass = isTerminal ? terminalClass : lightClass;
   
   const getPeekContent = (text) => {
     if (!text) return "Empty...";
@@ -155,7 +159,7 @@ const NoteCard = ({ note, isTerminal, onOpen, onPeek, refreshKey, isSelectionMod
 
   return (
     <div 
-        className={`relative flex flex-col ${cardClass} h-auto overflow-hidden group w-full rounded-md transition-all duration-300 ${isSelected ? 'translate-x-1' : ''}`}
+        className={`relative flex flex-col ${cardClass} h-auto overflow-hidden group w-full rounded-lg transition-all duration-300 ${isSelected ? 'translate-x-1' : ''}`}
         onClick={handleCardClick}
     >
        {/* HEADER */}
@@ -163,10 +167,10 @@ const NoteCard = ({ note, isTerminal, onOpen, onPeek, refreshKey, isSelectionMod
           {isSelectionMode && <SelectionCheckbox isSelected={isSelected} onToggle={onToggleSelect} isTerminal={isTerminal} />}
           <div className="flex-1 overflow-hidden">
              <div className="flex items-center gap-2 mb-1">
-                <FileText size={12} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-600'} />
+                <FileText size={12} className={isTerminal ? 'text-[#3fb950]' : 'text-[#24292f]'} />
                 <span className={`font-bold text-[10px] font-mono uppercase tracking-wide opacity-50`}>DOC</span>
              </div>
-             <span className={`font-bold text-xs font-mono leading-snug line-clamp-3 ${isTerminal ? 'text-[#e6edf3]' : 'text-[#1f2328]'}`}>
+             <span className={`font-bold text-xs font-mono leading-snug line-clamp-3 ${isTerminal ? 'text-[#e6edf3]' : 'text-[#24292f]'}`}>
                 <Typewriter text={note.title} speed={10} triggerKey={refreshKey} />
              </span>
           </div>
@@ -176,7 +180,7 @@ const NoteCard = ({ note, isTerminal, onOpen, onPeek, refreshKey, isSelectionMod
        {note.isPeeked && (
            <div className="p-3 cursor-pointer flex-1 hover:bg-current hover:bg-opacity-5 transition-colors flash-active" onClick={(e) => { e.stopPropagation(); onOpen(); }}>
               <div className={`text-[10px] leading-relaxed font-mono ${isTerminal ? 'text-[#8b949e]' : 'text-[#57606a]'}`}>
-                  <div className={`pl-2 py-1 border-l-2 ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-[#1f2328]'}`}>
+                  <div className={`pl-2 py-1 border-l-2 ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-[#24292f] text-[#1f2328]'}`}>
                     <Typewriter text={getPeekContent(note.content)} speed={5} triggerKey={note.isPeeked} />
                   </div>
               </div>
@@ -186,7 +190,7 @@ const NoteCard = ({ note, isTerminal, onOpen, onPeek, refreshKey, isSelectionMod
        {!isSelectionMode && (
            <button 
              onClick={(e) => { e.stopPropagation(); onPeek(); }}
-             className={`w-full py-1.5 flex items-center justify-center border-t ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50 text-[9px] font-bold uppercase tracking-wider transition-colors opacity-50 hover:opacity-100 bg-transparent flash-active z-10 ${isTerminal ? 'text-white' : 'text-gray-600'}`}
+             className={`w-full py-1.5 flex items-center justify-center border-t ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50 text-[9px] font-bold uppercase tracking-wider transition-colors opacity-50 hover:opacity-100 bg-transparent flash-active z-10 ${isTerminal ? 'text-white' : 'text-[#24292f]'}`}
            >
               {note.isPeeked ? '[ CLOSE_STREAM ]' : '[ SCAN_DATA ]'}
            </button>
@@ -196,9 +200,10 @@ const NoteCard = ({ note, isTerminal, onOpen, onPeek, refreshKey, isSelectionMod
 };
 
 const FolderCard = ({ folder, isTerminal, onToggle, onMoveNote, onDeleteNote, onOpenNote, onPeekNote, onAddNote, refreshKey, isSelectionMode, isSelected, onToggleSelect, selectedSubItems = new Set(), onToggleSubItem }) => {
-  const cardClass = isTerminal 
-    ? `bg-[#0d1117] border ${isSelected ? 'border-[#3fb950]' : 'border-[#30363d]'} hover:border-[#8b949e]` 
-    : `bg-white border ${isSelected ? 'border-blue-500 ring-1 ring-blue-500' : 'border-[#d0d7de]'} hover:border-[#8c959f] shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:shadow-md`;
+  const terminalClass = `bg-[#0d1117] border ${isSelected ? 'border-[#3fb950]' : 'border-[#30363d]'} hover:border-[#8b949e]`;
+  const lightClass = `bg-white border ${isSelected ? 'border-black ring-1 ring-black' : 'border-[#d0d7de]'} hover:border-[#b1bac4] shadow-[0_3px_6px_rgba(140,149,159,0.15)] hover:shadow-[0_8px_24px_rgba(140,149,159,0.2)] hover:-translate-y-0.5`;
+
+  const cardClass = isTerminal ? terminalClass : lightClass;
 
   const handleHeaderClick = () => {
       if (isSelectionMode) onToggleSelect();
@@ -206,7 +211,7 @@ const FolderCard = ({ folder, isTerminal, onToggle, onMoveNote, onDeleteNote, on
   };
 
   return (
-    <div className={`relative flex flex-col w-full rounded-md transition-all duration-300 ${cardClass} ${folder.isExpanded ? 'h-full' : ''}`}>
+    <div className={`relative flex flex-col w-full rounded-lg transition-all duration-300 ${cardClass} ${folder.isExpanded ? 'h-full' : ''}`}>
       <div 
         className={`p-3 flex items-start cursor-pointer flash-active ${folder.isExpanded ? (isTerminal ? 'border-b border-[#30363d]' : 'border-b border-[#d0d7de]') : ''} ${isTerminal ? '' : 'bg-[#f6f8fa]'}`}
         onClick={handleHeaderClick}
@@ -214,7 +219,7 @@ const FolderCard = ({ folder, isTerminal, onToggle, onMoveNote, onDeleteNote, on
         {isSelectionMode && <SelectionCheckbox isSelected={isSelected} onToggle={onToggleSelect} isTerminal={isTerminal} />}
 
         <div className="flex-1 flex items-start gap-2 overflow-hidden">
-           <Folder size={16} className={`mt-0.5 ${isTerminal ? 'text-[#3fb950]' : 'text-blue-500'}`} />
+           <Folder size={16} className={`mt-0.5 ${isTerminal ? 'text-[#3fb950]' : 'text-[#24292f]'}`} />
            <div className="flex flex-col gap-1 w-full">
              <span className={`font-bold text-xs font-mono leading-snug line-clamp-3 ${isTerminal ? 'text-[#e6edf3]' : 'text-[#1f2328]'}`}>
                 <Typewriter text={folder.name} speed={15} triggerKey={refreshKey} />
@@ -234,7 +239,7 @@ const FolderCard = ({ folder, isTerminal, onToggle, onMoveNote, onDeleteNote, on
         <div className="p-2 space-y-2 origin-top border-l-2 border-opacity-10 ml-2 my-2 border-current flex-1">
             {folder.notes.length === 0 ? <div className="text-center opacity-30 text-[10px] py-1 font-mono">// Empty Folder</div> : 
             folder.notes.map(note => (
-               <div key={note.id} className={`flex flex-col ${isTerminal ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-[#d0d7de]'} rounded-sm overflow-hidden transition-transform active:scale-[0.99] ${isSelectionMode && selectedSubItems.has(note.id) ? (isTerminal ? 'border-[#3fb950]' : 'border-blue-500') : ''}`}>
+               <div key={note.id} className={`flex flex-col ${isTerminal ? 'bg-[#161b22] border border-[#30363d]' : 'bg-white border border-[#d0d7de]'} rounded-sm overflow-hidden transition-transform active:scale-[0.99] ${isSelectionMode && selectedSubItems.has(note.id) ? (isTerminal ? 'border-[#3fb950]' : 'border-black') : ''}`}>
                  <div 
                     className="flex items-center justify-between p-2 border-b border-transparent hover:border-current hover:border-opacity-10 cursor-pointer"
                     onClick={() => {
@@ -245,7 +250,7 @@ const FolderCard = ({ folder, isTerminal, onToggle, onMoveNote, onDeleteNote, on
                     {isSelectionMode && (
                         <div className="mr-2">
                             {selectedSubItems.has(note.id) 
-                                ? <Check size={12} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-600'} /> 
+                                ? <Check size={12} className={isTerminal ? 'text-[#3fb950]' : 'text-[#24292f]'} /> 
                                 : <Square size={12} className="opacity-30" />}
                         </div>
                     )}
@@ -257,7 +262,7 @@ const FolderCard = ({ folder, isTerminal, onToggle, onMoveNote, onDeleteNote, on
                  </div>
                  {!isSelectionMode && note.isPeeked && (
                    <div 
-                     className={`mx-2 mb-2 mt-1 pl-2 py-1 border-l-2 text-[9px] font-mono whitespace-pre-wrap cursor-pointer ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-[#1f2328]'}`}
+                     className={`mx-2 mb-2 mt-1 pl-2 py-1 border-l-2 text-[9px] font-mono whitespace-pre-wrap cursor-pointer ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-[#24292f] text-[#1f2328]'}`}
                      onClick={() => onOpenNote(note)}
                    >
                      <Typewriter text={note.content ? note.content.substring(0, 100) + "..." : "Empty..."} speed={5} triggerKey={note.isPeeked} />
@@ -288,7 +293,7 @@ const EditorModal = ({ note, isTerminal, onClose, onSave }) => {
   if (!note) return null;
   const stats = getEditorStats(note.content);
   
-  const lineCount = Math.max(50, stats.lines); 
+  const lineCount = Math.max(50, stats.lines + 5); 
   const lines = Array.from({ length: lineCount }, (_, i) => i + 1);
 
   return (
@@ -297,10 +302,10 @@ const EditorModal = ({ note, isTerminal, onClose, onSave }) => {
         <div className="flex flex-col gap-1 overflow-hidden flex-1 mr-4">
             <span className="font-bold text-xs truncate">{note.title}</span>
             <div className={`flex gap-3 text-[9px] opacity-60`}>
-                <span className="flex items-center gap-1"><AlignLeft size={8}/> {stats.lines}</span>
-                <span className="flex items-center gap-1"><Hash size={8}/> {stats.words}</span>
-                <span className="flex items-center gap-1"><Type size={8}/> {stats.chars}</span>
-                <span className={`px-1 rounded text-[8px] font-bold ${isTerminal ? 'bg-[#238636] text-white' : 'bg-blue-600 text-white'}`}>INSERT</span>
+                <span className="flex items-center gap-1"><AlignLeft size={8}/> {stats.lines}L</span>
+                <span className="flex items-center gap-1"><Hash size={8}/> {stats.words}W</span>
+                <span className="flex items-center gap-1"><Type size={8}/> {stats.chars}C</span>
+                <span className={`px-1 rounded text-[8px] font-bold ${isTerminal ? 'bg-[#238636] text-white' : 'bg-[#24292f] text-white'}`}>INSERT</span>
             </div>
         </div>
         <button onClick={onClose} className={`shrink-0 px-3 py-1.5 text-xs font-bold border rounded flex items-center gap-2 ${isTerminal ? 'border-[#30363d] hover:bg-[#21262d]' : 'border-[#d0d7de] hover:bg-[#f3f4f6]'} transition-colors flash-active`}>
@@ -310,15 +315,18 @@ const EditorModal = ({ note, isTerminal, onClose, onSave }) => {
 
       <div className="flex-1 flex overflow-hidden relative">
           <div className="flex-1 flex overflow-y-auto custom-scrollbar relative">
-              <div className={`flex flex-col items-end pt-4 pr-3 pl-1 text-[10px] opacity-30 select-none border-r ${isTerminal ? 'border-[#30363d] bg-[#0d1117]' : 'border-[#d0d7de] bg-[#f6f8fa]'} min-h-full`}>
+              <div className={`flex flex-col items-end pt-4 pr-3 pl-1 text-[10px] opacity-30 select-none border-r ${isTerminal ? 'border-[#30363d] bg-[#0d1117]' : 'border-[#d0d7de] bg-[#f6f8fa]'} min-h-full w-8`}>
                   {lines.map(line => (
                       <div key={line} className="leading-relaxed h-[20px]">{line}</div>
                   ))}
               </div>
+              {/* FIX: whitespace-pre-wrap agar otomatis ganti baris 
+                  tapi tetep ngejaga enter yang manual
+              */}
               <textarea 
                 value={note.content}
                 onChange={(e) => onSave(e.target.value)}
-                className={`flex-1 w-full p-4 bg-transparent outline-none resize-none text-xs leading-relaxed font-mono whitespace-pre`}
+                className={`flex-1 w-full p-4 bg-transparent outline-none resize-none text-xs leading-relaxed font-mono whitespace-pre-wrap`}
                 style={{ lineHeight: '20px' }} 
                 placeholder={isTerminal ? "// Type code here..." : "Start writing..."}
                 spellCheck={false}
@@ -427,6 +435,46 @@ export default function DesnoteAppV7() {
     setActiveNote(prev => ({ ...prev, content }));
   };
   
+  // --- NEW FEATURES: EXPORT & IMPORT ---
+  const handleExport = () => {
+    const data = {
+      version: "v7",
+      timestamp: new Date().toISOString(),
+      folders: folders,
+      rootNotes: rootNotes
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `desnote_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setSettingsOpen(false);
+  };
+
+  const handleImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (data.folders && Array.isArray(data.folders)) setFolders(data.folders);
+        if (data.rootNotes && Array.isArray(data.rootNotes)) setRootNotes(data.rootNotes);
+        alert('Backup restored successfully!');
+        setSettingsOpen(false);
+        setRefreshKey(prev => prev + 1);
+      } catch (error) {
+        alert('Failed to parse backup file. Please ensure it is a valid JSON.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   // --- SPATIAL GRID LOGIC ---
   const combinedItems = useMemo(() => {
     let items = [];
@@ -438,34 +486,34 @@ export default function DesnoteAppV7() {
   const isTerminal = theme === 'dark';
   const bgClass = isTerminal ? 'bg-[#0d1117]' : 'bg-[#f6f8fa]';
   const textClass = isTerminal ? 'text-[#e6edf3]' : 'text-[#1f2328]';
-  const modalBg = isTerminal ? 'bg-[#161b22] border border-[#30363d] text-[#e6edf3]' : 'bg-white border border-[#d0d7de] text-[#1f2328] shadow-xl rounded-lg';
+  const modalBg = isTerminal ? 'bg-[#161b22] border border-[#30363d] text-[#e6edf3]' : 'bg-white border border-[#d0d7de] text-[#1f2328] shadow-2xl rounded-xl';
 
   return (
     <div className={`min-h-screen w-full relative flex flex-col ${bgClass} ${textClass} font-mono transition-colors duration-500 overflow-hidden`}>
       <GlobalStyles />
       {isTerminal && <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.02]" style={{ backgroundImage: 'linear-gradient(#30363d 1px, transparent 1px), linear-gradient(90deg, #30363d 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>}
 
-      <div className={`w-full flex items-center justify-between py-1 px-3 text-[9px] font-mono border-b select-none ${isTerminal ? 'bg-[#0d1117] border-[#30363d] text-[#8b949e]' : 'bg-gray-100 border-gray-200 text-gray-500'}`}>
+      <div className={`w-full flex items-center justify-between py-1 px-3 text-[9px] font-mono border-b select-none ${isTerminal ? 'bg-[#0d1117] border-[#30363d] text-[#8b949e]' : 'bg-white border-[#d0d7de] text-gray-500'}`}>
         <div className="flex gap-3"><span className="flex items-center gap-1 font-bold text-[#3fb950]"><Terminal size={10}/> <Typewriter text="root@desnote:~" speed={30} triggerKey={refreshKey} /></span></div>
         <div className="flex gap-3 items-center"><span className="uppercase tracking-widest opacity-50 flex gap-1">FILTER: <Typewriter text={viewMode} speed={50} triggerKey={refreshKey} /></span><span className="flex items-center gap-1 text-[#58a6ff]"><GitBranch size={10}/> main</span><span className="flex items-center gap-1"><Clock size={10}/> {getFormattedTime()}</span></div>
       </div>
 
       <header className={`px-4 py-3 flex flex-col gap-3 z-10 sticky top-0 ${isTerminal ? 'bg-[#0d1117]/95 border-b border-[#30363d]' : 'bg-[#f6f8fa]/90 border-b border-[#d0d7de] backdrop-blur shadow-sm'}`}>
         <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">{isTerminal ? <Terminal className="text-[#e6edf3]" size={18} /> : <Github className="text-black" size={18} />}<h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v8.3</span></h1></div>
+            <div className="flex items-center gap-2">{isTerminal ? <Terminal className="text-[#e6edf3]" size={18} /> : <Github className="text-black" size={18} />}<h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v8.4</span></h1></div>
             <div className="flex items-center gap-3">
-              <button onClick={toggleSelectionMode} className={`px-3 py-1.5 rounded-md text-[10px] font-bold border transition-all ${isSelectionMode ? (isTerminal ? 'bg-[#238636] border-[#3fb950] text-white' : 'bg-blue-600 border-blue-600 text-white') : (isTerminal ? 'border-[#30363d] hover:border-[#8b949e]' : 'bg-white border-[#d0d7de] hover:border-[#b1bac4]')}`}>{isSelectionMode ? 'DONE' : '[ SELECT ]'}</button>
+              <button onClick={toggleSelectionMode} className={`px-3 py-1.5 rounded-md text-[10px] font-bold border transition-all ${isSelectionMode ? (isTerminal ? 'bg-[#238636] border-[#3fb950] text-white' : 'bg-[#24292f] border-black text-white') : (isTerminal ? 'border-[#30363d] hover:border-[#8b949e]' : 'bg-white border-[#d0d7de] hover:border-[#b1bac4] shadow-sm')}`}>{isSelectionMode ? 'DONE' : '[ SELECT ]'}</button>
               <button onClick={() => setSettingsOpen(true)} className="p-1.5 rounded-md hover:bg-current hover:bg-opacity-10 transition-colors flash-active"><Settings size={16} /></button>
             </div>
         </div>
         {!searchQuery && (
           <div className="flex gap-2 w-full overflow-x-auto pb-1 scrollbar-none items-center">
-             <button onClick={() => toggleViewMode('FOLDER')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] transition-all select-none flash-active ${viewMode === 'FOLDER' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-[#d0d7de] text-[#57606a]')}`}><Folder size={12}/> <span className="font-bold">FOLDERS</span> <span className="opacity-50">{folders.length}</span></button>
-             <button onClick={() => toggleViewMode('NOTE')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] transition-all select-none flash-active ${viewMode === 'NOTE' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-[#d0d7de] text-[#57606a]')}`}><FileText size={12}/> <span className="font-bold">NOTES</span> <span className="opacity-50">{rootNotes.length}</span></button>
-             <button onClick={() => toggleViewMode('ALL')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] transition-all select-none flash-active ${viewMode === 'ALL' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-[#d0d7de] text-[#57606a]')}`}><Disc size={12}/> <span className="font-bold">ALL</span></button>
+             <button onClick={() => toggleViewMode('FOLDER')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] transition-all select-none flash-active ${viewMode === 'FOLDER' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-[#24292f] border-black text-white') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-[#d0d7de] text-[#57606a] shadow-sm')}`}><Folder size={12}/> <span className="font-bold">FOLDERS</span> <span className="opacity-50">{folders.length}</span></button>
+             <button onClick={() => toggleViewMode('NOTE')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] transition-all select-none flash-active ${viewMode === 'NOTE' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-[#24292f] border-black text-white') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-[#d0d7de] text-[#57606a] shadow-sm')}`}><FileText size={12}/> <span className="font-bold">NOTES</span> <span className="opacity-50">{rootNotes.length}</span></button>
+             <button onClick={() => toggleViewMode('ALL')} className={`flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] transition-all select-none flash-active ${viewMode === 'ALL' ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-[#24292f] border-black text-white') : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e]' : 'bg-white border-[#d0d7de] text-[#57606a] shadow-sm')}`}><Disc size={12}/> <span className="font-bold">ALL</span></button>
           </div>
         )}
-        <div className={`relative w-full group`}><div className={`absolute left-3 top-1/2 -translate-y-1/2 opacity-50 font-mono text-xs flex items-center gap-1`}><Command size={12}/> {">"}</div><input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="grep..." className={`w-full py-2 pl-12 pr-4 text-xs bg-transparent border rounded-md outline-none transition-all font-mono ${isTerminal ? 'border-[#30363d] focus:border-[#58a6ff] placeholder-[#8b949e] bg-[#010409]' : 'border-[#d0d7de] bg-white focus:border-blue-500 placeholder-gray-400'}`}/></div>
+        <div className={`relative w-full group`}><div className={`absolute left-3 top-1/2 -translate-y-1/2 opacity-50 font-mono text-xs flex items-center gap-1`}><Command size={12}/> {">"}</div><input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="grep..." className={`w-full py-2 pl-12 pr-4 text-xs bg-transparent border rounded-md outline-none transition-all font-mono ${isTerminal ? 'border-[#30363d] focus:border-[#58a6ff] placeholder-[#8b949e] bg-[#010409]' : 'border-[#d0d7de] bg-white focus:border-black placeholder-gray-400 shadow-sm'}`}/></div>
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 pb-32 custom-scrollbar z-0">
@@ -518,12 +566,56 @@ export default function DesnoteAppV7() {
       </main>
 
       {isSelectionMode && selectedIds.size > 0 && <SelectionBar isTerminal={isTerminal} selectedCount={selectedIds.size} onCancel={toggleSelectionMode} onDelete={handleBulkDelete} onMove={handleBulkMove} canMove={isOnlyNotesSelected} />}
-      {!isSelectionMode && <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">{addMenuOpen && <div className="flex flex-col gap-2 animate-in slide-in-from-bottom-4 fade-in duration-200 pointer-events-auto"><button onClick={() => setCreateModal({isOpen: true, type: 'NOTE'})} className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-xs font-bold tracking-wider uppercase transition-transform hover:scale-105 ${isTerminal ? 'bg-[#238636] text-white' : 'bg-blue-600 text-white'}`}><FileText size={16} /> Note</button><button onClick={() => setCreateModal({isOpen: true, type: 'FOLDER'})} className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-xs font-bold tracking-wider uppercase transition-transform hover:scale-105 ${isTerminal ? 'bg-[#1f6feb] text-white' : 'bg-white border border-[#d0d7de] text-gray-800'}`}><Folder size={16} /> Folder</button></div>}<button onClick={() => setAddMenuOpen(!addMenuOpen)} className={`pointer-events-auto h-12 w-12 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-90 ${addMenuOpen ? 'rotate-45 bg-red-500' : ''} ${isTerminal ? 'bg-[#3fb950] text-black hover:bg-[#2ea043]' : 'bg-blue-600 text-white hover:bg-blue-700'}`}><Plus size={24} strokeWidth={3} /></button></div>}
+      {!isSelectionMode && <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">{addMenuOpen && <div className="flex flex-col gap-2 animate-in slide-in-from-bottom-4 fade-in duration-200 pointer-events-auto"><button onClick={() => setCreateModal({isOpen: true, type: 'NOTE'})} className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-xs font-bold tracking-wider uppercase transition-transform hover:scale-105 ${isTerminal ? 'bg-[#238636] text-white' : 'bg-[#24292f] text-white'}`}><FileText size={16} /> Note</button><button onClick={() => setCreateModal({isOpen: true, type: 'FOLDER'})} className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-xs font-bold tracking-wider uppercase transition-transform hover:scale-105 ${isTerminal ? 'bg-[#1f6feb] text-white' : 'bg-white border border-[#d0d7de] text-gray-800'}`}><Folder size={16} /> Folder</button></div>}<button onClick={() => setAddMenuOpen(!addMenuOpen)} className={`pointer-events-auto h-12 w-12 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-90 ${addMenuOpen ? 'rotate-45 bg-red-500' : ''} ${isTerminal ? 'bg-[#3fb950] text-black hover:bg-[#2ea043]' : 'bg-[#24292f] text-white hover:bg-black'}`}><Plus size={24} strokeWidth={3} /></button></div>}
 
-      {createModal.isOpen && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"><div className={`w-full max-w-sm p-6 ${modalBg} flex flex-col gap-4 shadow-2xl border-t-4 ${isTerminal ? 'border-t-[#3fb950]' : 'border-t-blue-500'}`}><h3 className="font-bold text-lg uppercase tracking-widest font-mono">NEW_{createModal.type}</h3><input autoFocus placeholder="Enter name..." className="p-3 bg-transparent border rounded outline-none focus:ring-2 ring-opacity-50 ring-current transition-all font-mono" onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(e.target.value) }} onBlur={(e) => handleCreate(e.target.value)} /><button onClick={() => setCreateModal({isOpen: false, type: null})} className="text-xs opacity-50 hover:opacity-100 mt-2 font-mono">CANCEL (Tap outside)</button></div></div>}
+      {createModal.isOpen && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"><div className={`w-full max-w-sm p-6 ${modalBg} flex flex-col gap-4 shadow-2xl border-t-4 ${isTerminal ? 'border-t-[#3fb950]' : 'border-t-black'}`}><h3 className="font-bold text-lg uppercase tracking-widest font-mono">NEW_{createModal.type}</h3><input autoFocus placeholder="Enter name..." className="p-3 bg-transparent border rounded outline-none focus:ring-2 ring-opacity-50 ring-current transition-all font-mono" onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(e.target.value) }} onBlur={(e) => handleCreate(e.target.value)} /><button onClick={() => setCreateModal({isOpen: false, type: null})} className="text-xs opacity-50 hover:opacity-100 mt-2 font-mono">CANCEL (Tap outside)</button></div></div>}
       <DeleteConfirmModal isOpen={deleteModal.isOpen} count={deleteModal.count} onConfirm={confirmBulkDelete} onCancel={() => setDeleteModal({ ...deleteModal, isOpen: false })} isTerminal={isTerminal} />
       {moveModal.isOpen && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"><div className={`w-full max-w-sm p-6 ${modalBg} flex flex-col gap-4 max-h-[80vh] font-mono`}><h3 className="font-bold border-b border-opacity-20 border-current pb-2">mv SOURCE TARGET</h3><div className="flex flex-col gap-2 overflow-y-auto custom-scrollbar flex-1"><button onClick={() => executeBulkMove('ROOT')} className="p-3 text-left border border-opacity-20 border-current rounded font-bold flex items-center gap-2 hover:bg-current hover:bg-opacity-10 text-xs flash-active"><LayoutGrid size={14}/> ./root</button>{folders.map(f => (<button key={f.id} onClick={() => executeBulkMove(f.id)} className="p-3 text-left border border-opacity-20 border-current rounded flex items-center gap-2 hover:bg-current hover:bg-opacity-10 text-xs flash-active"><Folder size={14}/> {f.name}</button>))}</div><button onClick={() => setMoveModal({...moveModal, isOpen: false})} className="py-2 opacity-50 hover:opacity-100 text-xs flash-active">ABORT_OPERATION</button></div></div>}
-      {settingsOpen && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-200"><div className={`w-full max-w-sm p-6 ${modalBg} flex flex-col gap-6 shadow-2xl font-mono`}><div className="flex justify-between items-center border-b border-current border-opacity-20 pb-2"><h3 className="font-bold text-lg uppercase tracking-widest flex items-center gap-2"><Settings size={18}/> CONFIG</h3><button onClick={() => setSettingsOpen(false)}><X size={18}/></button></div><div className="flex flex-col gap-3"><div className="text-[10px] font-bold opacity-50 uppercase tracking-widest">Interface</div><button onClick={toggleTheme} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center justify-between hover:bg-current hover:bg-opacity-5 transition-all flash-active"><div className="flex items-center gap-3">{theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}<span className="font-bold text-xs">Color Scheme</span></div><span className="text-[10px] opacity-60 uppercase bg-current bg-opacity-10 px-2 py-0.5 rounded">{theme}</span></button><div className="text-[10px] font-bold opacity-50 uppercase tracking-widest mt-2">I/O Operations</div><button onClick={handleExport} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center gap-4 hover:bg-current hover:bg-opacity-5 transition-all flash-active"><div className={`p-1.5 rounded-full ${isTerminal ? 'bg-[#3fb950]/20 text-[#3fb950]' : 'bg-blue-100 text-blue-600'}`}><Download size={16}/></div><div className="text-left flex-1"><div className="font-bold text-xs">Export Backup</div><div className="text-[9px] opacity-60">Save .json file</div></div></button><button onClick={() => fileInputRef.current.click()} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center gap-4 hover:bg-current hover:bg-opacity-5 transition-all flash-active"><div className={`p-1.5 rounded-full ${isTerminal ? 'bg-yellow-500/20 text-yellow-500' : 'bg-orange-100 text-orange-600'}`}><Upload size={16}/></div><div className="text-left flex-1"><div className="font-bold text-xs">Import Data</div><div className="text-[9px] opacity-60">Restore from .json</div></div><input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden" /></button></div></div></div>}
+      
+      {/* --- SETTINGS MODAL --- */}
+      {settingsOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className={`w-full max-w-sm p-6 ${modalBg} flex flex-col gap-6 shadow-2xl font-mono`}>
+                <div className="flex justify-between items-center border-b border-current border-opacity-20 pb-2">
+                    <h3 className="font-bold text-lg uppercase tracking-widest flex items-center gap-2"><Settings size={18}/> CONFIG</h3>
+                    <button onClick={() => setSettingsOpen(false)}><X size={18}/></button>
+                </div>
+                <div className="flex flex-col gap-3">
+                    <div className="text-[10px] font-bold opacity-50 uppercase tracking-widest">Interface</div>
+                    <button onClick={toggleTheme} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center justify-between hover:bg-current hover:bg-opacity-5 transition-all flash-active">
+                        <div className="flex items-center gap-3">
+                            {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
+                            <span className="font-bold text-xs">Color Scheme</span>
+                        </div>
+                        <span className="text-[10px] opacity-60 uppercase bg-current bg-opacity-10 px-2 py-0.5 rounded">{theme}</span>
+                    </button>
+                    
+                    <div className="text-[10px] font-bold opacity-50 uppercase tracking-widest mt-2">Data Management</div>
+                    
+                    <button onClick={handleExport} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center gap-4 hover:bg-current hover:bg-opacity-5 transition-all flash-active">
+                        <div className={`p-1.5 rounded-full ${isTerminal ? 'bg-[#3fb950]/20 text-[#3fb950]' : 'bg-[#24292f] text-white'}`}>
+                            <Download size={16}/>
+                        </div>
+                        <div className="text-left flex-1">
+                            <div className="font-bold text-xs">Export Backup</div>
+                            <div className="text-[9px] opacity-60">Save .json file</div>
+                        </div>
+                    </button>
+                    
+                    <button onClick={() => fileInputRef.current.click()} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center gap-4 hover:bg-current hover:bg-opacity-5 transition-all flash-active">
+                        <div className={`p-1.5 rounded-full ${isTerminal ? 'bg-yellow-500/20 text-yellow-500' : 'bg-gray-200 text-gray-700'}`}>
+                            <Upload size={16}/>
+                        </div>
+                        <div className="text-left flex-1">
+                            <div className="font-bold text-xs">Import Data</div>
+                            <div className="text-[9px] opacity-60">Restore from .json</div>
+                        </div>
+                        <input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden" />
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
 
       <EditorModal note={activeNote} isTerminal={isTerminal} onClose={() => setActiveNote(null)} onSave={saveEditorContent} />
     </div>
