@@ -4,7 +4,7 @@ import {
   Settings, Moon, Sun, X, Save, MoreVertical, 
   ArrowRightLeft, Trash2, Terminal, Github, 
   CornerDownRight, Search, LayoutGrid, File, Edit3, Move, Eye, EyeOff, AlertTriangle,
-  Download, Upload, Cpu, Activity, HardDrive, Clock, Zap
+  Download, Upload, Cpu, Activity, HardDrive, Clock, Zap, Layers, Monitor
 } from 'lucide-react';
 
 // --- UTILS & DATA ---
@@ -35,25 +35,34 @@ const initialRootNotes = [
   { id: 'root-2', title: 'grocery_unj.list', content: '1. Rokok Ziga\n2. Kopi Hitam Kantin Blok M\n3. Kertas A3\n4. Cat Minyak\n5. Kuas nomor 12', isPeeked: false },
 ];
 
-// --- SUB-COMPONENTS (MOVED OUTSIDE TO FIX KEYBOARD BUG) ---
+// --- SUB-COMPONENTS ---
 
-const SystemStatus = ({ isTerminal, totalFolders, totalNotes }) => (
+const SystemStatus = ({ isTerminal, totalFolders, totalNotes, currentView }) => (
   <div className={`w-full flex items-center justify-between py-2 px-4 text-[10px] font-mono border-b ${isTerminal ? 'bg-black/20 border-[#30363d] text-[#8b949e]' : 'bg-gray-100 border-gray-200 text-gray-500'}`}>
     <div className="flex gap-4">
       <span className="flex items-center gap-1"><Cpu size={10}/> CPU: 12%</span>
       <span className="flex items-center gap-1"><Activity size={10}/> MEM: 240MB</span>
     </div>
-    <div className="flex gap-4">
-       <span className="flex items-center gap-1"><HardDrive size={10}/> DIRS: {totalFolders}</span>
-       <span className="flex items-center gap-1"><File size={10}/> FILES: {totalNotes}</span>
+    <div className="flex gap-4 items-center">
+       <span className="uppercase tracking-widest opacity-50 mr-2">MODE: {currentView}</span>
        <span className="flex items-center gap-1"><Clock size={10}/> {getFormattedTime()}</span>
     </div>
   </div>
 );
 
-const StatsCard = ({ icon: Icon, label, value, isTerminal, colorClass }) => (
-  <div className={`flex-1 p-3 rounded-lg border flex items-center gap-3 transition-all duration-300 hover:scale-[1.02] ${isTerminal ? 'bg-[#161b22] border-[#30363d]' : 'bg-white border-gray-200 shadow-sm'}`}>
-     <div className={`p-2 rounded-md ${isTerminal ? 'bg-opacity-10 bg-white' : 'bg-opacity-10 bg-black'} ${colorClass}`}>
+const StatsCard = ({ icon: Icon, label, value, isTerminal, colorClass, onClick, isActive }) => (
+  <div 
+    onClick={onClick}
+    className={`
+      flex-1 p-3 rounded-lg border flex items-center gap-3 cursor-pointer select-none
+      transition-all duration-300 hover:scale-[1.02] active:scale-95
+      ${isActive 
+        ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] shadow-[0_0_15px_rgba(63,185,80,0.2)]' : 'bg-blue-50 border-blue-400 shadow-md') 
+        : (isTerminal ? 'bg-[#161b22] border-[#30363d] opacity-70 hover:opacity-100' : 'bg-white border-gray-200 shadow-sm hover:border-blue-300')
+      }
+    `}
+  >
+     <div className={`p-2 rounded-md ${isTerminal ? 'bg-opacity-10 bg-white' : 'bg-opacity-10 bg-black'} ${colorClass} transition-colors`}>
         <Icon size={18} />
      </div>
      <div>
@@ -86,7 +95,7 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
   };
 
   return (
-    <div className={`relative flex flex-col ${cardClass} h-auto overflow-hidden group w-full rounded-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-lg`}>
+    <div className={`relative flex flex-col ${cardClass} h-auto overflow-hidden group w-full rounded-lg transition-all duration-500 hover:-translate-y-1 hover:shadow-lg animate-in fade-in slide-in-from-bottom-2`}>
        <div className={`flex justify-between items-start p-3 ${isTerminal ? 'bg-[#161b22]/50' : 'bg-gray-50/80'} border-b ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50`}>
           <div className="flex items-center gap-2 overflow-hidden">
              <FileText size={16} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-500'} />
@@ -104,7 +113,11 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
        >
           <div className={`text-xs leading-relaxed font-mono ${isTerminal ? 'text-[#8b949e]' : 'text-gray-600'}`}>
             {note.isPeeked 
-              ? getPeekContent(note.content)
+              ? (
+                  <div className="animate-in slide-in-from-top-2 fade-in duration-300">
+                    {getPeekContent(note.content)}
+                  </div>
+                )
               : (
                   <div className="line-clamp-3 opacity-70">
                      {note.content || <span className="italic">No content (Edit)</span>}
@@ -136,7 +149,7 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
   };
 
   return (
-    <div className={`relative flex flex-col ${cardClass} w-full rounded-lg transition-all duration-300 hover:shadow-lg`}>
+    <div className={`relative flex flex-col ${cardClass} w-full rounded-lg transition-all duration-300 hover:shadow-lg animate-in fade-in slide-in-from-bottom-2`}>
       <div 
         className={`p-3 flex items-center justify-between cursor-pointer ${folder.isExpanded ? (isTerminal ? 'border-b border-[#30363d]' : 'border-b border-[#d0d7de]') : ''}`}
         onClick={onToggle}
@@ -157,7 +170,7 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
       </div>
 
       {folder.isExpanded && (
-        <div className="p-2 space-y-2 animate-in slide-in-from-top-2 duration-300 origin-top">
+        <div className="p-2 space-y-2 animate-in slide-in-from-top-4 fade-in duration-300 ease-out origin-top">
             {folder.notes.length === 0 ? <div className="text-center opacity-30 text-[10px] py-2 font-mono">Empty Folder</div> : 
             folder.notes.map(note => (
                <div key={note.id} className={`flex flex-col ${isTerminal ? 'bg-[#161b22] border border-[#30363d]' : 'bg-gray-50 border border-gray-100'} rounded overflow-hidden transition-transform active:scale-[0.99]`}>
@@ -171,7 +184,7 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
                     </div>
                  </div>
                  {note.isPeeked && (
-                   <div className="p-2 bg-black/5 cursor-text text-[10px] opacity-70 whitespace-pre-wrap font-mono animate-in fade-in duration-200">
+                   <div className="p-2 bg-black/5 cursor-text text-[10px] opacity-70 whitespace-pre-wrap font-mono animate-in slide-in-from-top-2 fade-in duration-200">
                      {getPeekContent(note.content)}
                    </div>
                  )}
@@ -260,6 +273,10 @@ export default function DesnoteAppV7() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, type: null, targetId: null, sourceId: null, isRoot: false });
   const [columnCount, setColumnCount] = useState(2);
+  
+  // NEW: View Mode State (ALL, FOLDER, NOTE)
+  const [viewMode, setViewMode] = useState('ALL'); 
+
   const fileInputRef = useRef(null);
 
   // --- EFFECTS ---
@@ -281,6 +298,12 @@ export default function DesnoteAppV7() {
 
   // --- ACTIONS ---
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+
+  // NEW: Filter Toggle Logic
+  const toggleViewMode = (mode) => {
+    if (viewMode === mode) setViewMode('ALL');
+    else setViewMode(mode);
+  };
 
   const toggleFolder = (folderId) => {
     setFolders(folders.map(f => 
@@ -411,12 +434,21 @@ export default function DesnoteAppV7() {
     event.target.value = null; 
   };
 
-  // --- MASONRY LOGIC ---
+  // --- MASONRY LOGIC (WITH FILTER) ---
   const combinedItems = useMemo(() => {
-    const folderItems = folders.map(f => ({ type: 'FOLDER', data: f }));
-    const noteItems = rootNotes.map(n => ({ type: 'NOTE', data: n }));
+    let folderItems = [];
+    let noteItems = [];
+
+    // Filter Logic
+    if (viewMode === 'ALL' || viewMode === 'FOLDER') {
+      folderItems = folders.map(f => ({ type: 'FOLDER', data: f }));
+    }
+    if (viewMode === 'ALL' || viewMode === 'NOTE') {
+      noteItems = rootNotes.map(n => ({ type: 'NOTE', data: n }));
+    }
+
     return [...folderItems, ...noteItems];
-  }, [folders, rootNotes]);
+  }, [folders, rootNotes, viewMode]);
 
   const columns = useMemo(() => {
     const cols = Array.from({ length: columnCount }, () => []);
@@ -453,7 +485,7 @@ export default function DesnoteAppV7() {
       )}
 
       {/* SYSTEM STATUS BAR */}
-      <SystemStatus isTerminal={isTerminal} totalFolders={folders.length} totalNotes={folders.reduce((acc, f) => acc + f.notes.length, 0) + rootNotes.length} />
+      <SystemStatus isTerminal={isTerminal} totalFolders={folders.length} totalNotes={folders.reduce((acc, f) => acc + f.notes.length, 0) + rootNotes.length} currentView={viewMode} />
 
       <header className={`px-5 py-4 flex flex-col gap-4 z-10 sticky top-0 ${isTerminal ? 'bg-[#0d1117]/95 border-b border-[#30363d]' : 'bg-white/90 backdrop-blur shadow-sm'}`}>
         <div className="flex justify-between items-center">
@@ -465,18 +497,39 @@ export default function DesnoteAppV7() {
               <button onClick={() => setSettingsOpen(true)} className="p-2 rounded-full hover:bg-current hover:bg-opacity-10 transition-colors active:scale-90">
                   <Settings size={18} />
               </button>
-              <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-current hover:bg-opacity-10 transition-colors active:scale-90">
-                  {isTerminal ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
             </div>
         </div>
 
-        {/* DASHBOARD STATS */}
+        {/* DASHBOARD STATS (INTERACTIVE FILTER) */}
         {!searchQuery && (
           <div className="flex gap-2 w-full overflow-x-auto pb-2 scrollbar-none">
-            <StatsCard icon={Folder} label="Project Dirs" value={folders.length} isTerminal={isTerminal} colorClass="text-blue-500" />
-            <StatsCard icon={FileText} label="Active Notes" value={folders.reduce((acc, f) => acc + f.notes.length, 0) + rootNotes.length} isTerminal={isTerminal} colorClass="text-green-500" />
-            <StatsCard icon={Zap} label="System" value="ONLINE" isTerminal={isTerminal} colorClass="text-yellow-500" />
+            <StatsCard 
+              icon={Folder} 
+              label="Project Dirs" 
+              value={folders.length} 
+              isTerminal={isTerminal} 
+              colorClass="text-blue-500" 
+              onClick={() => toggleViewMode('FOLDER')}
+              isActive={viewMode === 'FOLDER'}
+            />
+            <StatsCard 
+              icon={FileText} 
+              label="Active Notes" 
+              value={rootNotes.length} 
+              isTerminal={isTerminal} 
+              colorClass="text-green-500" 
+              onClick={() => toggleViewMode('NOTE')}
+              isActive={viewMode === 'NOTE'}
+            />
+            <StatsCard 
+              icon={Zap} 
+              label="System" 
+              value="ONLINE" 
+              isTerminal={isTerminal} 
+              colorClass="text-yellow-500" 
+              onClick={() => toggleViewMode('ALL')}
+              isActive={viewMode === 'ALL'}
+            />
           </div>
         )}
 
@@ -523,8 +576,8 @@ export default function DesnoteAppV7() {
         </div>
         {combinedItems.length === 0 && (
            <div className="flex flex-col items-center justify-center py-20 opacity-30 text-sm font-mono gap-4">
-              <Terminal size={48} />
-              <div>[SYSTEM_EMPTY] :: NO_DATA_FOUND</div>
+              <Layers size={48} />
+              <div>[VIEW_MODE: {viewMode}] :: NO_DATA</div>
            </div>
         )}
       </main>
@@ -565,6 +618,7 @@ export default function DesnoteAppV7() {
         isTerminal={isTerminal}
       />
 
+      {/* SETTINGS MODAL (WITH THEME TOGGLE) */}
       {settingsOpen && (
        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className={`w-full max-w-sm p-6 ${modalBg} flex flex-col gap-6 shadow-2xl`}>
@@ -574,7 +628,18 @@ export default function DesnoteAppV7() {
                 </h3>
                 <button onClick={() => setSettingsOpen(false)}><X size={18}/></button>
              </div>
+             
              <div className="flex flex-col gap-3">
+                <div className="text-[10px] font-bold opacity-50 uppercase tracking-widest">Appearance</div>
+                <button onClick={toggleTheme} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center justify-between hover:bg-current hover:bg-opacity-5 transition-all">
+                    <div className="flex items-center gap-3">
+                        {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+                        <span className="font-bold text-sm">Theme Mode</span>
+                    </div>
+                    <span className="text-xs opacity-60 uppercase">{theme}</span>
+                </button>
+
+                <div className="text-[10px] font-bold opacity-50 uppercase tracking-widest mt-2">Data Management</div>
                 <button onClick={handleExport} className="w-full py-4 px-4 rounded border border-current border-opacity-20 flex items-center gap-4 hover:bg-current hover:bg-opacity-5 transition-all">
                    <div className={`p-2 rounded-full ${isTerminal ? 'bg-[#3fb950]/20 text-[#3fb950]' : 'bg-blue-100 text-blue-600'}`}><Download size={20}/></div>
                    <div className="text-left flex-1"><div className="font-bold text-sm">Backup (JSON)</div><div className="text-[10px] opacity-60">Export system state</div></div>
