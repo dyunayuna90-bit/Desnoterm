@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Folder, FileText, ChevronDown, ChevronRight, Plus, 
-  Settings, Moon, Sun, X, Save, MoreVertical, 
-  ArrowRightLeft, Trash2, Terminal, Github, 
-  CornerDownRight, Search, LayoutGrid, File, Edit3, Move, Eye, EyeOff, AlertTriangle,
-  Download, Upload, Cpu, Activity, HardDrive, Clock, Zap, Layers, Monitor, GitBranch, Command
+  Settings, Moon, Sun, X, Save, Move, Trash2, Terminal, Github, 
+  Search, LayoutGrid, AlertTriangle,
+  Download, Upload, Cpu, GitBranch, Command, Clock, Disc
 } from 'lucide-react';
 
-// --- UTILS & DATA ---
+// --- DATA INITIALIZATION ---
 const generateId = () => Math.random().toString(36).substr(2, 9);
 const getFormattedTime = () => new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
@@ -35,55 +34,76 @@ const initialRootNotes = [
   { id: 'root-2', title: 'grocery_unj.list', content: '1. Rokok Ziga\n2. Kopi Hitam Kantin Blok M\n3. Kertas A3\n4. Cat Minyak\n5. Kuas nomor 12', isPeeked: false },
 ];
 
+// --- GLOBAL STYLES (Linux Cursor & Scrollbar) ---
+const GlobalStyles = () => (
+  <style>{`
+    /* Custom Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #30363d;
+      border-radius: 0px; /* Square edges */
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #58a6ff;
+    }
+    
+    /* TERMINAL CURSOR HACK */
+    textarea, input {
+      caret-color: #3fb950; /* Neon Green */
+      caret-shape: block;   /* Experimental Block Cursor */
+    }
+    
+    /* Selection Color */
+    ::selection {
+      background: rgba(63, 185, 80, 0.3);
+      color: white;
+    }
+  `}</style>
+);
+
 // --- SUB-COMPONENTS ---
 
 const SystemStatus = ({ isTerminal, viewMode }) => (
-  <div className={`w-full flex items-center justify-between py-1 px-3 text-[9px] font-mono border-b ${isTerminal ? 'bg-[#0d1117] border-[#30363d] text-[#8b949e]' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
+  <div className={`w-full flex items-center justify-between py-1 px-3 text-[9px] font-mono border-b select-none ${isTerminal ? 'bg-[#0d1117] border-[#30363d] text-[#8b949e]' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
     <div className="flex gap-3">
-      <span className="flex items-center gap-1"><Terminal size={10}/> bash --login</span>
+      <span className="flex items-center gap-1 font-bold text-[#3fb950]"><Terminal size={10}/> root@desnote:~</span>
       <span className="flex items-center gap-1 opacity-50"><Cpu size={10}/> 12%</span>
     </div>
     <div className="flex gap-3 items-center">
-       <span className="uppercase tracking-widest opacity-50">VIEW: {viewMode}</span>
-       <span className="flex items-center gap-1 text-[#3fb950]"><GitBranch size={10}/> main</span>
+       <span className="uppercase tracking-widest opacity-50">FILTER: {viewMode}</span>
+       <span className="flex items-center gap-1 text-[#58a6ff]"><GitBranch size={10}/> main</span>
        <span className="flex items-center gap-1"><Clock size={10}/> {getFormattedTime()}</span>
     </div>
   </div>
 );
 
-// REFACTORED: Compact Stats Button (GitHub Style)
 const StatsButton = ({ icon: Icon, label, value, isTerminal, colorClass, onClick, isActive }) => (
   <button 
     onClick={onClick}
     className={`
-      flex items-center gap-2 px-3 py-1.5 rounded-md border text-[11px] font-mono transition-all select-none
+      flex items-center justify-center gap-2 px-3 py-1 rounded border text-[10px] font-mono transition-all select-none
       ${isActive 
         ? (isTerminal ? 'bg-[#1f242e] border-[#3fb950] text-[#e6edf3]' : 'bg-blue-50 border-blue-400 text-blue-700') 
-        : (isTerminal ? 'bg-[#161b22] border-[#30363d] text-[#8b949e] hover:border-[#8b949e] hover:text-[#c9d1d9]' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700')
+        : (isTerminal ? 'bg-transparent border-[#30363d] text-[#8b949e] hover:border-[#8b949e] hover:text-[#c9d1d9]' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700')
       }
     `}
   >
      <div className={`flex items-center gap-1.5 ${isActive ? colorClass : ''}`}>
-        <Icon size={14} />
+        <Icon size={12} />
         <span className="font-bold tracking-tight">{label}</span>
      </div>
      {value !== undefined && (
-       <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${isTerminal ? 'bg-[#30363d] text-[#c9d1d9]' : 'bg-gray-100 text-gray-600'}`}>
+       <span className={`ml-1 px-1.5 py-0.5 text-[9px] font-bold ${isTerminal ? 'text-[#c9d1d9]' : 'text-gray-600'}`}>
           {value}
        </span>
      )}
   </button>
-);
-
-const ActionButtons = ({ onMove, onDelete, colorClass }) => (
-  <div className="flex items-center gap-1 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
-    <button onClick={onMove} className={`p-1 rounded hover:bg-current hover:bg-opacity-10 ${colorClass} opacity-60 hover:opacity-100 transition-opacity`}>
-      <Move size={12} />
-    </button>
-    <button onClick={onDelete} className={`p-1 rounded hover:bg-red-500/10 text-red-500 opacity-60 hover:opacity-100 transition-opacity`}>
-      <Trash2 size={12} />
-    </button>
-  </div>
 );
 
 const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek }) => {
@@ -98,32 +118,35 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
   };
 
   return (
-    <div className={`relative flex flex-col ${cardClass} h-auto overflow-hidden group w-full rounded-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2`}>
-       <div className={`flex justify-between items-center p-2 px-3 ${isTerminal ? 'bg-[#161b22]' : 'bg-gray-50'} border-b ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50`}>
+    <div className={`relative flex flex-col ${cardClass} h-auto overflow-hidden group w-full rounded-sm transition-all duration-200`}>
+       <div className={`flex justify-between items-center p-2 px-3 border-b ${isTerminal ? 'bg-[#161b22] border-[#30363d]' : 'bg-gray-50 border-[#d0d7de]'} border-opacity-50`}>
           <div className="flex items-center gap-2 overflow-hidden">
-             <FileText size={14} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-500'} />
-             <span className="font-bold text-xs truncate font-mono">{note.title}</span>
+             <FileText size={12} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-500'} />
+             <span className="font-bold text-[11px] truncate font-mono">{note.title}</span>
           </div>
-          <ActionButtons 
-            onMove={(e) => { e.stopPropagation(); onMove(); }}
-            onDelete={(e) => { e.stopPropagation(); onDelete(); }}
-            colorClass={isTerminal ? 'text-yellow-500' : 'text-gray-600'}
-          />
+          <div className="flex items-center gap-1 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
+            <button onClick={onMove} className={`p-1 rounded hover:bg-current hover:bg-opacity-10 text-yellow-500 opacity-40 hover:opacity-100 transition-opacity`}>
+              <Move size={10} />
+            </button>
+            <button onClick={onDelete} className={`p-1 rounded hover:bg-red-500/10 text-red-500 opacity-40 hover:opacity-100 transition-opacity`}>
+              <Trash2 size={10} />
+            </button>
+          </div>
        </div>
        <div 
          className="p-3 cursor-pointer min-h-[50px] flex-1 hover:bg-current hover:bg-opacity-5 transition-colors"
          onClick={onOpen}
        >
-          <div className={`text-[11px] leading-relaxed font-mono ${isTerminal ? 'text-[#8b949e]' : 'text-gray-600'}`}>
+          <div className={`text-[10px] leading-relaxed font-mono ${isTerminal ? 'text-[#8b949e]' : 'text-gray-600'}`}>
             {note.isPeeked 
               ? (
-                  <div className="animate-in slide-in-from-top-2 fade-in duration-300">
+                  <div className={`pl-3 py-1 border-l-4 ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'} animate-in slide-in-from-left-2 duration-200`}>
                     {getPeekContent(note.content)}
                   </div>
                 )
               : (
                   <div className="line-clamp-3 opacity-70">
-                     {note.content || <span className="italic opacity-50">// No content...</span>}
+                     {note.content || <span className="italic opacity-30">// Empty file</span>}
                   </div>
                 )
             }
@@ -131,18 +154,19 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
        </div>
        <button 
          onClick={(e) => { e.stopPropagation(); onPeek(); }}
-         className={`w-full py-1.5 flex items-center justify-center border-t ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50 text-[9px] font-bold uppercase tracking-wider hover:bg-current hover:bg-opacity-10 transition-colors opacity-60 hover:opacity-100`}
+         className={`w-full py-1 flex items-center justify-center border-t ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50 text-[9px] font-bold uppercase tracking-wider hover:bg-current hover:bg-opacity-10 transition-colors opacity-40 hover:opacity-100`}
        >
-          {note.isPeeked ? 'CLOSE_PEEK' : 'PEEK_CONTENT'}
+          {note.isPeeked ? 'COLLAPSE' : 'PEEK'}
        </button>
     </div>
   );
 };
 
 const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDeleteNote, onOpenNote, onPeekNote, onAddNote }) => {
-  const cardClass = isTerminal 
-    ? 'bg-[#0d1117] border border-[#30363d] hover:border-[#8b949e]' 
-    : 'bg-white border border-[#d0d7de] hover:border-blue-300 shadow-sm';
+  // CLEANER LOOK: No background when collapsed
+  const baseClass = isTerminal 
+    ? (folder.isExpanded ? 'bg-[#0d1117] border border-[#30363d]' : 'bg-transparent border border-transparent hover:border-[#30363d]')
+    : (folder.isExpanded ? 'bg-white border border-[#d0d7de] shadow-sm' : 'bg-transparent border border-transparent hover:border-[#d0d7de]');
 
   const getPeekContent = (text) => {
     if (!text) return "Empty...";
@@ -151,42 +175,44 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
   };
 
   return (
-    <div className={`relative flex flex-col ${cardClass} w-full rounded-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2`}>
+    <div className={`relative flex flex-col w-full rounded-sm transition-all duration-200 ${baseClass}`}>
       <div 
         className={`p-2 px-3 flex items-center justify-between cursor-pointer ${folder.isExpanded ? (isTerminal ? 'border-b border-[#30363d]' : 'border-b border-[#d0d7de]') : ''}`}
         onClick={onToggle}
       >
         <div className="flex items-center gap-2 overflow-hidden">
-           <Folder size={16} className={isTerminal ? 'text-[#3fb950]' : 'text-yellow-500'} />
+           <Folder size={14} className={isTerminal ? 'text-[#3fb950]' : 'text-yellow-500'} />
            <div className="flex items-center gap-2 overflow-hidden">
-             <span className="font-bold text-xs truncate font-mono">{folder.name}</span>
-             {!folder.isExpanded && <span className="text-[9px] opacity-50 font-mono px-1.5 py-0.5 rounded bg-current bg-opacity-10">{folder.notes.length}</span>}
+             <span className={`font-bold text-[11px] truncate font-mono ${isTerminal ? 'text-[#e6edf3]' : 'text-gray-800'}`}>{folder.name}</span>
+             {/* CLEAN: Just text for count, no box */}
+             {!folder.isExpanded && <span className="text-[10px] opacity-40 font-mono ml-1">[{folder.notes.length}]</span>}
            </div>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center opacity-40 hover:opacity-100">
             {folder.isExpanded ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
-            <button onClick={(e) => {e.stopPropagation(); onDelete();}} className="ml-2 p-1 hover:text-red-500 opacity-30 hover:opacity-100 transition-opacity">
-                <Trash2 size={12}/>
+            <button onClick={(e) => {e.stopPropagation(); onDelete();}} className="ml-2 p-1 hover:text-red-500 transition-colors">
+                <Trash2 size={10}/>
             </button>
         </div>
       </div>
 
       {folder.isExpanded && (
-        <div className="p-2 space-y-2 animate-in slide-in-from-top-4 fade-in duration-300 ease-out origin-top">
+        <div className="p-2 space-y-2 animate-in slide-in-from-top-2 fade-in duration-200 origin-top">
             {folder.notes.length === 0 ? <div className="text-center opacity-30 text-[10px] py-1 font-mono">// Empty Folder</div> : 
             folder.notes.map(note => (
                <div key={note.id} className={`flex flex-col ${isTerminal ? 'bg-[#161b22] border border-[#30363d]' : 'bg-gray-50 border border-gray-100'} rounded-sm overflow-hidden transition-transform active:scale-[0.99]`}>
                  <div className="flex items-center justify-between p-1.5 pl-3 border-b border-transparent hover:border-current hover:border-opacity-10">
                     <div className="flex-1 cursor-pointer overflow-hidden" onClick={() => onOpenNote(note)}>
-                       <span className="text-[11px] font-bold truncate block hover:underline font-mono">{note.title}</span>
+                       <span className="text-[10px] font-bold truncate block hover:underline font-mono">{note.title}</span>
                     </div>
                     <div className="flex gap-1 pl-2">
-                      <button onClick={() => onMoveNote(note.id)} className="hover:text-yellow-500 opacity-60 hover:opacity-100 p-1"><Move size={10}/></button>
-                      <button onClick={() => onDeleteNote(note.id)} className="hover:text-red-500 opacity-60 hover:opacity-100 p-1"><Trash2 size={10}/></button>
+                      <button onClick={() => onMoveNote(note.id)} className="hover:text-yellow-500 opacity-50 hover:opacity-100 p-1"><Move size={10}/></button>
+                      <button onClick={() => onDeleteNote(note.id)} className="hover:text-red-500 opacity-50 hover:opacity-100 p-1"><Trash2 size={10}/></button>
                     </div>
                  </div>
+                 {/* PEEK: Thick Border Style */}
                  {note.isPeeked && (
-                   <div className="p-2 bg-black/5 cursor-text text-[10px] opacity-70 whitespace-pre-wrap font-mono animate-in slide-in-from-top-2 fade-in duration-200">
+                   <div className={`mx-2 mb-2 mt-1 pl-2 py-1 border-l-2 text-[9px] font-mono whitespace-pre-wrap animate-in slide-in-from-left-2 ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'}`}>
                      {getPeekContent(note.content)}
                    </div>
                  )}
@@ -197,7 +223,7 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
             ))}
             <button 
                 onClick={onAddNote}
-                className="w-full py-1.5 text-[10px] text-center opacity-50 hover:opacity-100 border border-dashed border-current rounded flex justify-center items-center gap-1 hover:bg-current hover:bg-opacity-5 transition-all font-mono"
+                className="w-full py-1.5 text-[10px] text-center opacity-40 hover:opacity-100 border border-dashed border-current rounded flex justify-center items-center gap-1 hover:bg-current hover:bg-opacity-5 transition-all font-mono"
             >
                 <Plus size={10}/> Add_File
             </button>
@@ -210,13 +236,14 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
 const EditorModal = ({ note, isTerminal, onClose, onSave }) => {
   if (!note) return null;
   return (
-    <div className={`fixed inset-0 z-[100] flex flex-col ${isTerminal ? 'bg-[#0d1117] text-[#e6edf3]' : 'bg-white text-[#24292f]'} font-mono animate-in slide-in-from-bottom-10 fade-in duration-300`}>
-      <div className={`flex justify-between items-center p-3 px-4 border-b ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'}`}>
-        <div className="flex items-center gap-3 overflow-hidden">
-            <FileText size={18} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-600'} /> 
+    <div className={`fixed inset-0 z-[100] flex flex-col ${isTerminal ? 'bg-[#0d1117] text-[#e6edf3]' : 'bg-white text-[#24292f]'} font-mono animate-in slide-in-from-bottom-5 fade-in duration-200`}>
+      <div className={`flex justify-between items-center p-2 px-4 border-b ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'}`}>
+        <div className="flex items-center gap-2 overflow-hidden">
+            <span className="opacity-50 text-xs">vim</span>
             <span className="font-bold text-sm truncate">{note.title}</span>
+            <span className="opacity-50 text-xs ml-2">[+]</span>
         </div>
-        <button onClick={onClose} className={`px-3 py-1.5 text-xs font-bold border rounded flex items-center gap-2 ${isTerminal ? 'border-[#30363d] hover:bg-[#21262d]' : 'border-[#d0d7de] hover:bg-[#f3f4f6]'} transition-colors`}>
+        <button onClick={onClose} className={`px-3 py-1 text-xs font-bold border rounded flex items-center gap-2 ${isTerminal ? 'border-[#30363d] hover:bg-[#21262d]' : 'border-[#d0d7de] hover:bg-[#f3f4f6]'} transition-colors`}>
             <Save size={14} /> SAVE & CLOSE
         </button>
       </div>
@@ -472,6 +499,7 @@ export default function DesnoteAppV7() {
   // --- RENDER ---
   return (
     <div className={`min-h-screen w-full relative flex flex-col ${bgClass} ${textClass} ${fontClass} transition-colors duration-500 overflow-hidden`}>
+      <GlobalStyles />
       
       {/* BACKGROUND GRID */}
       {isTerminal && (
@@ -488,7 +516,7 @@ export default function DesnoteAppV7() {
         <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
                 {isTerminal ? <Terminal className="text-[#e6edf3]" size={18} /> : <Github className="text-black" size={18} />}
-                <h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v7.2</span></h1>
+                <h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v7.4</span></h1>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => setSettingsOpen(true)} className="p-1.5 rounded-md hover:bg-current hover:bg-opacity-10 transition-colors">
@@ -519,8 +547,8 @@ export default function DesnoteAppV7() {
               isActive={viewMode === 'NOTE'}
             />
              <StatsButton 
-              icon={Layers} 
-              label="ALL DATA" 
+              icon={Disc} 
+              label="ALL" 
               isTerminal={isTerminal} 
               colorClass="text-yellow-500" 
               onClick={() => toggleViewMode('ALL')}
@@ -533,7 +561,7 @@ export default function DesnoteAppV7() {
             <div className={`absolute left-3 top-1/2 -translate-y-1/2 opacity-50 font-mono text-xs flex items-center gap-1`}>
                 <Command size={12}/> {">"}
             </div>
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="filter_content..." className={`w-full py-2 pl-12 pr-4 text-xs bg-transparent border rounded-md outline-none transition-all font-mono ${isTerminal ? 'border-[#30363d] focus:border-[#58a6ff] placeholder-[#8b949e] bg-[#010409]' : 'border-gray-300 bg-gray-50 focus:bg-white focus:border-blue-500'}`}/>
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="grep..." className={`w-full py-2 pl-12 pr-4 text-xs bg-transparent border rounded-md outline-none transition-all font-mono ${isTerminal ? 'border-[#30363d] focus:border-[#58a6ff] placeholder-[#8b949e] bg-[#010409]' : 'border-gray-300 bg-gray-50 focus:bg-white focus:border-blue-500'}`}/>
         </div>
       </header>
 
@@ -574,7 +602,7 @@ export default function DesnoteAppV7() {
         </div>
         {combinedItems.length === 0 && (
            <div className="flex flex-col items-center justify-center py-20 opacity-30 text-xs font-mono gap-4">
-              <Layers size={32} />
+              <Terminal size={32} />
               <div>// EMPTY_VIEW: {viewMode}</div>
            </div>
         )}
