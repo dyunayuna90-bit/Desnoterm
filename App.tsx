@@ -3,7 +3,7 @@ import {
   Folder, FileText, ChevronDown, ChevronRight, Plus, 
   Settings, Moon, Sun, X, Save, Move, Trash2, Terminal, Github, 
   Search, LayoutGrid, AlertTriangle,
-  Download, Upload, Cpu, GitBranch, Command, Clock, Disc, Hash
+  Download, Upload, Cpu, GitBranch, Command, Clock, Disc, Hash, Zap
 } from 'lucide-react';
 
 // --- DATA INITIALIZATION ---
@@ -34,26 +34,42 @@ const initialRootNotes = [
   { id: 'root-2', title: 'grocery_unj.list', content: '1. Rokok Ziga\n2. Kopi Hitam Kantin Blok M\n3. Kertas A3\n4. Cat Minyak\n5. Kuas nomor 12', isPeeked: false },
 ];
 
-// --- HACKER TYPEWRITER COMPONENT ---
-const Typewriter = ({ text, speed = 5, onComplete }) => {
+// --- HACKER TYPEWRITER COMPONENT (ENHANCED) ---
+const Typewriter = ({ text, speed = 20, delay = 0, triggerKey }) => {
   const [displayed, setDisplayed] = useState('');
+  const [isCursorVisible, setIsCursorVisible] = useState(true);
   
+  // Reset when text changes or triggerKey changes (GLOBAL REFRESH)
   useEffect(() => {
-    let i = 0;
     setDisplayed('');
-    const timer = setInterval(() => {
-      if (i < text.length) {
-        setDisplayed(prev => prev + text.charAt(i));
-        i++;
-      } else {
-        clearInterval(timer);
-        if(onComplete) onComplete();
-      }
-    }, speed); // Kecepatan ngetik
-    return () => clearInterval(timer);
-  }, [text]);
+    setIsCursorVisible(true);
+    let i = 0;
+    
+    const startTyping = () => {
+        const timer = setInterval(() => {
+            if (i < text.length) {
+                setDisplayed(text.substring(0, i + 1));
+                i++;
+            } else {
+                clearInterval(timer);
+                setIsCursorVisible(false); // Hide cursor when done
+            }
+        }, speed + (Math.random() * 10)); // Add randomness to speed
+    };
 
-  return <span>{displayed}<span className="animate-pulse inline-block w-2 h-4 bg-current ml-1 align-middle opacity-70"></span></span>;
+    const delayTimer = setTimeout(startTyping, delay);
+
+    return () => {
+        clearTimeout(delayTimer);
+    };
+  }, [text, triggerKey, speed, delay]);
+
+  return (
+    <span>
+      {displayed}
+      {isCursorVisible && <span className="animate-pulse inline-block w-1.5 h-3 bg-current ml-0.5 align-middle opacity-70"></span>}
+    </span>
+  );
 };
 
 // --- GLOBAL STYLES ---
@@ -68,6 +84,7 @@ const GlobalStyles = () => (
     /* TERMINAL CURSOR HACK */
     textarea, input {
       caret-color: #3fb950; 
+      caret-shape: block;
     }
     
     /* Selection Color */
@@ -78,7 +95,7 @@ const GlobalStyles = () => (
 
     /* Flash Animation for Feedback */
     @keyframes flash {
-      0% { background-color: rgba(63, 185, 80, 0.5); }
+      0% { background-color: rgba(63, 185, 80, 0.8); }
       100% { background-color: transparent; }
     }
     .flash-active:active {
@@ -89,21 +106,26 @@ const GlobalStyles = () => (
 
 // --- SUB-COMPONENTS ---
 
-const SystemStatus = ({ isTerminal, viewMode }) => (
+const SystemStatus = ({ isTerminal, viewMode, refreshKey }) => (
   <div className={`w-full flex items-center justify-between py-1 px-3 text-[9px] font-mono border-b select-none ${isTerminal ? 'bg-[#0d1117] border-[#30363d] text-[#8b949e]' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
     <div className="flex gap-3">
-      <span className="flex items-center gap-1 font-bold text-[#3fb950]"><Terminal size={10}/> root@desnote:~</span>
+      <span className="flex items-center gap-1 font-bold text-[#3fb950]">
+        <Terminal size={10}/> 
+        <Typewriter text="root@desnote:~" speed={30} triggerKey={refreshKey} />
+      </span>
       <span className="flex items-center gap-1 opacity-50"><Cpu size={10}/> 12%</span>
     </div>
     <div className="flex gap-3 items-center">
-       <span className="uppercase tracking-widest opacity-50">FILTER: {viewMode}</span>
+       <span className="uppercase tracking-widest opacity-50 flex gap-1">
+         FILTER: <Typewriter text={viewMode} speed={50} triggerKey={viewMode} />
+       </span>
        <span className="flex items-center gap-1 text-[#58a6ff]"><GitBranch size={10}/> main</span>
        <span className="flex items-center gap-1"><Clock size={10}/> {getFormattedTime()}</span>
     </div>
   </div>
 );
 
-const StatsButton = ({ icon: Icon, label, value, isTerminal, colorClass, onClick, isActive }) => (
+const StatsButton = ({ icon: Icon, label, value, isTerminal, colorClass, onClick, isActive, refreshKey }) => (
   <button 
     onClick={onClick}
     className={`
@@ -116,7 +138,10 @@ const StatsButton = ({ icon: Icon, label, value, isTerminal, colorClass, onClick
   >
      <div className={`flex items-center gap-1.5 ${isActive ? colorClass : ''}`}>
         <Icon size={12} />
-        <span className="font-bold tracking-tight">{label}</span>
+        <span className="font-bold tracking-tight">
+            {/* Delay button text slightly for wave effect */}
+            <Typewriter text={label} speed={20} delay={Math.random() * 200} triggerKey={refreshKey} />
+        </span>
      </div>
      {value !== undefined && (
        <span className={`ml-1 px-1.5 py-0.5 text-[9px] font-bold ${isTerminal ? 'text-[#c9d1d9]' : 'text-gray-600'}`}>
@@ -126,7 +151,7 @@ const StatsButton = ({ icon: Icon, label, value, isTerminal, colorClass, onClick
   </button>
 );
 
-const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek }) => {
+const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek, refreshKey }) => {
   const cardClass = isTerminal 
     ? 'bg-[#0d1117] border border-[#30363d] hover:border-[#8b949e]' 
     : 'bg-white border border-[#d0d7de] hover:border-blue-300 shadow-sm';
@@ -142,7 +167,10 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
        <div className={`flex justify-between items-center p-2 px-3 border-b ${isTerminal ? 'bg-[#161b22] border-[#30363d]' : 'bg-gray-50 border-[#d0d7de]'} border-opacity-50`}>
           <div className="flex items-center gap-2 overflow-hidden">
              <FileText size={12} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-500'} />
-             <span className="font-bold text-[11px] truncate font-mono">{note.title}</span>
+             <span className="font-bold text-[11px] truncate font-mono">
+                {/* Note Title Types out on Refresh */}
+                <Typewriter text={note.title} speed={10} delay={Math.random() * 300} triggerKey={refreshKey} />
+             </span>
           </div>
           <div className="flex items-center gap-1 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
             <button onClick={onMove} className={`p-1 rounded hover:bg-current hover:bg-opacity-10 text-yellow-500 opacity-40 hover:opacity-100 transition-opacity flash-active`}>
@@ -161,19 +189,19 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
             {note.isPeeked 
               ? (
                   <div className={`pl-2 py-1 border-l-2 ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'}`}>
-                    {/* HACKER TYPING EFFECT */}
-                    <Typewriter text={getPeekContent(note.content)} speed={10} />
+                    {/* HACKER TYPING EFFECT FOR CONTENT */}
+                    <Typewriter text={getPeekContent(note.content)} speed={5} triggerKey={note.isPeeked} />
                   </div>
                 )
               : (
                   <div className="line-clamp-3 opacity-70">
-                     {note.content || <span className="italic opacity-30">// Empty file</span>}
+                     {/* Preview also types out slowly */}
+                     {note.content ? <Typewriter text={note.content.substring(0, 80) + '...'} speed={1} delay={500} triggerKey={refreshKey} /> : <span className="italic opacity-30">// Empty file</span>}
                   </div>
                 )
             }
           </div>
        </div>
-       {/* TRANSPARENT PEEK BUTTON WITH FLASH FEEDBACK */}
        <button 
          onClick={(e) => { e.stopPropagation(); onPeek(); }}
          className={`w-full py-1.5 flex items-center justify-center border-t ${isTerminal ? 'border-[#30363d]' : 'border-[#d0d7de]'} border-opacity-50 text-[9px] font-bold uppercase tracking-wider transition-colors opacity-50 hover:opacity-100 bg-transparent flash-active`}
@@ -184,8 +212,7 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
   );
 };
 
-const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDeleteNote, onOpenNote, onPeekNote, onAddNote }) => {
-  // RESTORED: Box Style always visible but cleaner
+const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDeleteNote, onOpenNote, onPeekNote, onAddNote, refreshKey }) => {
   const cardClass = isTerminal 
     ? 'bg-[#0d1117] border border-[#30363d] hover:border-[#8b949e]' 
     : 'bg-white border border-[#d0d7de] hover:border-blue-300 shadow-sm';
@@ -205,8 +232,10 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
         <div className="flex items-center gap-2 overflow-hidden">
            <Folder size={14} className={isTerminal ? 'text-[#3fb950]' : 'text-yellow-500'} />
            <div className="flex items-center gap-1 overflow-hidden">
-             <span className={`font-bold text-[11px] truncate font-mono ${isTerminal ? 'text-[#e6edf3]' : 'text-gray-800'}`}>{folder.name}</span>
-             {/* CLEAN COUNT: No box, just text */}
+             <span className={`font-bold text-[11px] truncate font-mono ${isTerminal ? 'text-[#e6edf3]' : 'text-gray-800'}`}>
+                {/* Folder Name Types out */}
+                <Typewriter text={folder.name} speed={15} delay={Math.random() * 200} triggerKey={refreshKey} />
+             </span>
              {!folder.isExpanded && <span className="text-[10px] opacity-40 font-mono ml-1">[{folder.notes.length}]</span>}
            </div>
         </div>
@@ -225,7 +254,9 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
                <div key={note.id} className={`flex flex-col ${isTerminal ? 'bg-[#161b22] border border-[#30363d]' : 'bg-gray-50 border border-gray-100'} rounded-sm overflow-hidden transition-transform active:scale-[0.99]`}>
                  <div className="flex items-center justify-between p-1.5 pl-3 border-b border-transparent hover:border-current hover:border-opacity-10">
                     <div className="flex-1 cursor-pointer overflow-hidden flash-active" onClick={() => onOpenNote(note)}>
-                       <span className="text-[10px] font-bold truncate block hover:underline font-mono">{note.title}</span>
+                       <span className="text-[10px] font-bold truncate block hover:underline font-mono">
+                          <Typewriter text={note.title} speed={10} delay={50} triggerKey={folder.isExpanded} />
+                       </span>
                     </div>
                     <div className="flex gap-1 pl-2">
                       <button onClick={() => onMoveNote(note.id)} className="hover:text-yellow-500 opacity-50 hover:opacity-100 p-1 flash-active"><Move size={10}/></button>
@@ -235,7 +266,7 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
                  {/* PEEK INSIDE FOLDER */}
                  {note.isPeeked && (
                    <div className={`mx-2 mb-2 mt-1 pl-2 py-1 border-l-2 text-[9px] font-mono whitespace-pre-wrap ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'}`}>
-                     <Typewriter text={getPeekContent(note.content)} speed={5} />
+                     <Typewriter text={getPeekContent(note.content)} speed={5} triggerKey={note.isPeeked} />
                    </div>
                  )}
                  <button onClick={() => onPeekNote(note.id)} className="w-full py-0.5 bg-black/5 hover:bg-black/10 text-[8px] text-center opacity-40 uppercase tracking-widest hover:opacity-100 transition-opacity flash-active">
@@ -325,6 +356,9 @@ export default function DesnoteAppV7() {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, type: null, targetId: null, sourceId: null, isRoot: false });
   const [columnCount, setColumnCount] = useState(2);
   const [viewMode, setViewMode] = useState('ALL'); 
+  
+  // GLOBAL REFRESH KEY (For Matrix Effect)
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const fileInputRef = useRef(null);
 
@@ -346,17 +380,22 @@ export default function DesnoteAppV7() {
   }, []);
 
   // --- ACTIONS ---
-  const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  const toggleTheme = () => {
+      setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+      setRefreshKey(prev => prev + 1); // Retype everything on theme switch
+  };
 
   const toggleViewMode = (mode) => {
     if (viewMode === mode) setViewMode('ALL');
     else setViewMode(mode);
+    setRefreshKey(prev => prev + 1); // Trigger Global Retype
   };
 
   const toggleFolder = (folderId) => {
     setFolders(folders.map(f => 
       f.id === folderId ? { ...f, isExpanded: !f.isExpanded } : f
     ));
+    // Note: Expanding folder automatically triggers internal Typewriter because components mount
   };
 
   const togglePeek = (folderId, noteId) => {
@@ -382,6 +421,7 @@ export default function DesnoteAppV7() {
     }
     setCreateModal({ isOpen: false, type: null });
     setAddMenuOpen(false);
+    setRefreshKey(prev => prev + 1); // Retype list to show new item
   };
 
   const initDeleteNote = (sourceId, noteId, isRoot) => {
@@ -447,6 +487,7 @@ export default function DesnoteAppV7() {
       setFolders(prev => prev.map(f => f.id === targetId ? { ...f, notes: [...f.notes, noteToMove] } : f));
     }
     setMoveModal({ isOpen: false, noteId: null, sourceId: null, isFromRoot: false });
+    setRefreshKey(prev => prev + 1);
   };
 
   // --- IMPORT/EXPORT ---
@@ -475,6 +516,7 @@ export default function DesnoteAppV7() {
           setFolders(data.folders);
           setRootNotes(data.rootNotes);
           setSettingsOpen(false);
+          setRefreshKey(prev => prev + 1);
         }
       } catch (err) { alert("Failed to read file."); }
     };
@@ -531,17 +573,17 @@ export default function DesnoteAppV7() {
       )}
 
       {/* TOP SYSTEM STATUS */}
-      <SystemStatus isTerminal={isTerminal} viewMode={viewMode} />
+      <SystemStatus isTerminal={isTerminal} viewMode={viewMode} refreshKey={refreshKey} />
 
       {/* HEADER AREA */}
       <header className={`px-4 py-3 flex flex-col gap-3 z-10 sticky top-0 ${isTerminal ? 'bg-[#0d1117]/95 border-b border-[#30363d]' : 'bg-white/90 backdrop-blur shadow-sm'}`}>
         <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
                 {isTerminal ? <Terminal className="text-[#e6edf3]" size={18} /> : <Github className="text-black" size={18} />}
-                <h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v7.5</span></h1>
+                <h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v7.6</span></h1>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => setSettingsOpen(true)} className="p-1.5 rounded-md hover:bg-current hover:bg-opacity-10 transition-colors">
+              <button onClick={() => setSettingsOpen(true)} className="p-1.5 rounded-md hover:bg-current hover:bg-opacity-10 transition-colors flash-active">
                   <Settings size={16} />
               </button>
             </div>
@@ -558,6 +600,7 @@ export default function DesnoteAppV7() {
               colorClass="text-blue-500" 
               onClick={() => toggleViewMode('FOLDER')}
               isActive={viewMode === 'FOLDER'}
+              refreshKey={refreshKey}
             />
             <StatsButton 
               icon={FileText} 
@@ -567,6 +610,7 @@ export default function DesnoteAppV7() {
               colorClass="text-green-500" 
               onClick={() => toggleViewMode('NOTE')}
               isActive={viewMode === 'NOTE'}
+              refreshKey={refreshKey}
             />
              <StatsButton 
               icon={Disc} 
@@ -575,6 +619,7 @@ export default function DesnoteAppV7() {
               colorClass="text-yellow-500" 
               onClick={() => toggleViewMode('ALL')}
               isActive={viewMode === 'ALL'}
+              refreshKey={refreshKey}
             />
           </div>
         )}
@@ -607,6 +652,7 @@ export default function DesnoteAppV7() {
                                     const title = prompt("New note name:");
                                     if(title) setFolders(folders.map(f => f.id === item.data.id ? { ...f, notes: [...f.notes, { id: generateId(), title, content: '', isPeeked: false }] } : f));
                                 }}
+                                refreshKey={refreshKey}
                               />
                             : <NoteCard 
                                 key={item.data.id} 
@@ -617,6 +663,7 @@ export default function DesnoteAppV7() {
                                 onDelete={() => initDeleteNote('ROOT', item.data.id, true)}
                                 onOpen={() => openEditor(item.data, null)}
                                 onPeek={() => togglePeek(null, item.data.id)}
+                                refreshKey={refreshKey}
                               />
                     ))}
                 </div>
@@ -679,7 +726,7 @@ export default function DesnoteAppV7() {
              
              <div className="flex flex-col gap-3">
                 <div className="text-[10px] font-bold opacity-50 uppercase tracking-widest">Interface</div>
-                <button onClick={toggleTheme} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center justify-between hover:bg-current hover:bg-opacity-5 transition-all">
+                <button onClick={toggleTheme} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center justify-between hover:bg-current hover:bg-opacity-5 transition-all flash-active">
                     <div className="flex items-center gap-3">
                         {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
                         <span className="font-bold text-xs">Color Scheme</span>
@@ -688,11 +735,11 @@ export default function DesnoteAppV7() {
                 </button>
 
                 <div className="text-[10px] font-bold opacity-50 uppercase tracking-widest mt-2">I/O Operations</div>
-                <button onClick={handleExport} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center gap-4 hover:bg-current hover:bg-opacity-5 transition-all">
+                <button onClick={handleExport} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center gap-4 hover:bg-current hover:bg-opacity-5 transition-all flash-active">
                    <div className={`p-1.5 rounded-full ${isTerminal ? 'bg-[#3fb950]/20 text-[#3fb950]' : 'bg-blue-100 text-blue-600'}`}><Download size={16}/></div>
                    <div className="text-left flex-1"><div className="font-bold text-xs">Export Backup</div><div className="text-[9px] opacity-60">Save .json file</div></div>
                 </button>
-                <button onClick={() => fileInputRef.current.click()} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center gap-4 hover:bg-current hover:bg-opacity-5 transition-all">
+                <button onClick={() => fileInputRef.current.click()} className="w-full py-3 px-4 rounded border border-current border-opacity-20 flex items-center gap-4 hover:bg-current hover:bg-opacity-5 transition-all flash-active">
                    <div className={`p-1.5 rounded-full ${isTerminal ? 'bg-yellow-500/20 text-yellow-500' : 'bg-orange-100 text-orange-600'}`}><Upload size={16}/></div>
                    <div className="text-left flex-1"><div className="font-bold text-xs">Import Data</div><div className="text-[9px] opacity-60">Restore from .json</div></div>
                    <input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden" />
@@ -708,13 +755,13 @@ export default function DesnoteAppV7() {
             <h3 className="font-bold border-b border-opacity-20 border-current pb-2">mv SOURCE TARGET</h3>
             <div className="flex flex-col gap-2 overflow-y-auto custom-scrollbar flex-1">
                {!moveModal.isFromRoot && (
-                  <button onClick={() => executeMove('ROOT')} className="p-3 text-left border border-opacity-20 border-current rounded font-bold flex items-center gap-2 hover:bg-current hover:bg-opacity-10 text-xs"><LayoutGrid size={14}/> ./root</button>
+                  <button onClick={() => executeMove('ROOT')} className="p-3 text-left border border-opacity-20 border-current rounded font-bold flex items-center gap-2 hover:bg-current hover:bg-opacity-10 text-xs flash-active"><LayoutGrid size={14}/> ./root</button>
                )}
                {folders.filter(f => f.id !== moveModal.sourceId).map(f => (
-                  <button key={f.id} onClick={() => executeMove(f.id)} className="p-3 text-left border border-opacity-20 border-current rounded flex items-center gap-2 hover:bg-current hover:bg-opacity-10 text-xs"><Folder size={14}/> {f.name}</button>
+                  <button key={f.id} onClick={() => executeMove(f.id)} className="p-3 text-left border border-opacity-20 border-current rounded flex items-center gap-2 hover:bg-current hover:bg-opacity-10 text-xs flash-active"><Folder size={14}/> {f.name}</button>
                ))}
             </div>
-            <button onClick={() => setMoveModal({...moveModal, isOpen: false})} className="py-2 opacity-50 hover:opacity-100 text-xs">ABORT_OPERATION</button>
+            <button onClick={() => setMoveModal({...moveModal, isOpen: false})} className="py-2 opacity-50 hover:opacity-100 text-xs flash-active">ABORT_OPERATION</button>
           </div>
         </div>
       )}
