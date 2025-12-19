@@ -34,40 +34,55 @@ const initialRootNotes = [
   { id: 'root-2', title: 'grocery_unj.list', content: '1. Rokok Ziga\n2. Kopi Hitam Kantin Blok M\n3. Kertas A3\n4. Cat Minyak\n5. Kuas nomor 12', isPeeked: false },
 ];
 
-// --- HACKER TYPEWRITER COMPONENT (OPTIMIZED) ---
-const Typewriter = ({ text, speed = 20, delay = 0, triggerKey = null }) => {
-  const [displayed, setDisplayed] = useState('');
-  const [isCursorVisible, setIsCursorVisible] = useState(true);
+// --- SMART TYPEWRITER (FIXED: STABLE) ---
+const Typewriter = ({ text, speed = 20, triggerKey = null }) => {
+  const [displayed, setDisplayed] = useState(text); // Default show text immediately if no trigger
+  const [isCursorVisible, setIsCursorVisible] = useState(false);
   
+  // Ref to track if we have already typed this specific text/trigger combo
+  const hasTyped = useRef(false);
+  const prevTrigger = useRef(triggerKey);
+  const prevText = useRef(text);
+
   useEffect(() => {
+    // Logic: Only type if text changes OR triggerKey changes
+    if (prevText.current === text && prevTrigger.current === triggerKey && hasTyped.current) {
+        return; // Do nothing if props are stable
+    }
+
+    // Reset logic
+    hasTyped.current = true;
+    prevTrigger.current = triggerKey;
+    prevText.current = text;
+
     setDisplayed('');
     setIsCursorVisible(true);
+    
     let i = 0;
     let timer;
     
-    const startTyping = () => {
+    // Add small random start delay internally so items don't start EXACTLY at same millisecond
+    const startDelay = Math.random() * 150; 
+
+    const runTyping = () => {
         timer = setInterval(() => {
             if (i < text.length) {
                 setDisplayed(text.substring(0, i + 1));
                 i++;
             } else {
                 clearInterval(timer);
-                setIsCursorVisible(false); 
+                setIsCursorVisible(false);
             }
-        }, speed + (Math.random() * 10)); // Natural typing variation
+        }, speed);
     };
 
-    const delayTimer = setTimeout(startTyping, delay);
+    const delayTimeout = setTimeout(runTyping, startDelay);
 
     return () => {
-        clearTimeout(delayTimer);
+        clearTimeout(delayTimeout);
         if(timer) clearInterval(timer);
     };
-  }, [text, triggerKey, speed, delay]); 
-  // Dependency Logic:
-  // 1. Text changes -> Retype
-  // 2. TriggerKey changes -> Retype (Used for Global Refresh)
-  // 3. Mounts -> Type (Because useEffect runs on mount)
+  }, [text, triggerKey, speed]);
 
   return (
     <span>
@@ -116,7 +131,6 @@ const SystemStatus = ({ isTerminal, viewMode, refreshKey }) => (
     <div className="flex gap-3">
       <span className="flex items-center gap-1 font-bold text-[#3fb950]">
         <Terminal size={10}/> 
-        {/* Pass refreshKey so this retypes on Tab Change */}
         <Typewriter text="root@desnote:~" speed={30} triggerKey={refreshKey} />
       </span>
       <span className="flex items-center gap-1 opacity-50"><Cpu size={10}/> 12%</span>
@@ -145,8 +159,8 @@ const StatsButton = ({ icon: Icon, label, value, isTerminal, colorClass, onClick
      <div className={`flex items-center gap-1.5 ${isActive ? colorClass : ''}`}>
         <Icon size={12} />
         <span className="font-bold tracking-tight">
-            {/* Pass refreshKey here too */}
-            <Typewriter text={label} speed={20} delay={Math.random() * 200} triggerKey={refreshKey} />
+            {/* ONLY retype if refreshKey changes */}
+            <Typewriter text={label} speed={20} triggerKey={refreshKey} />
         </span>
      </div>
      {value !== undefined && (
@@ -174,8 +188,8 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
           <div className="flex items-center gap-2 overflow-hidden">
              <FileText size={12} className={isTerminal ? 'text-[#3fb950]' : 'text-blue-500'} />
              <span className="font-bold text-[11px] truncate font-mono">
-                {/* Title retypes ONLY on global refreshKey change */}
-                <Typewriter text={note.title} speed={10} delay={Math.random() * 300} triggerKey={refreshKey} />
+                {/* Title Stable unless Global Refresh */}
+                <Typewriter text={note.title} speed={10} triggerKey={refreshKey} />
              </span>
           </div>
           <div className="flex items-center gap-1 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
@@ -195,14 +209,14 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
             {note.isPeeked 
               ? (
                   <div className={`pl-2 py-1 border-l-2 ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'}`}>
-                    {/* TRIGGER KEY is UNDEFINED here, so it only types on MOUNT (when peek opens) */}
-                    <Typewriter text={getPeekContent(note.content)} speed={5} />
+                    {/* Retype ONLY on Peek Trigger */}
+                    <Typewriter text={getPeekContent(note.content)} speed={5} triggerKey={note.isPeeked} />
                   </div>
                 )
               : (
                   <div className="line-clamp-3 opacity-70">
-                     {/* Preview relies on refreshKey */}
-                     {note.content ? <Typewriter text={note.content.substring(0, 80) + '...'} speed={1} delay={500} triggerKey={refreshKey} /> : <span className="italic opacity-30">// Empty file</span>}
+                     {/* Preview Stable unless Global Refresh */}
+                     {note.content ? <Typewriter text={note.content.substring(0, 80) + '...'} speed={1} triggerKey={refreshKey} /> : <span className="italic opacity-30">// Empty file</span>}
                   </div>
                 )
             }
@@ -219,9 +233,10 @@ const NoteCard = ({ note, folderId, isTerminal, onMove, onDelete, onOpen, onPeek
 };
 
 const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDeleteNote, onOpenNote, onPeekNote, onAddNote, refreshKey }) => {
+  // RESTORED: Solid Background even when collapsed
   const cardClass = isTerminal 
-    ? (folder.isExpanded ? 'bg-[#0d1117] border border-[#30363d]' : 'bg-transparent border border-transparent hover:border-[#30363d]')
-    : (folder.isExpanded ? 'bg-white border border-[#d0d7de] shadow-sm' : 'bg-transparent border border-transparent hover:border-[#d0d7de]');
+    ? 'bg-[#0d1117] border border-[#30363d] hover:border-[#8b949e]' 
+    : 'bg-white border border-[#d0d7de] hover:border-blue-300 shadow-sm';
 
   const getPeekContent = (text) => {
     if (!text) return "Empty...";
@@ -239,8 +254,8 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
            <Folder size={14} className={isTerminal ? 'text-[#3fb950]' : 'text-yellow-500'} />
            <div className="flex items-center gap-1 overflow-hidden">
              <span className={`font-bold text-[11px] truncate font-mono ${isTerminal ? 'text-[#e6edf3]' : 'text-gray-800'}`}>
-                {/* Folder Name uses refreshKey - Static on expand/collapse */}
-                <Typewriter text={folder.name} speed={15} delay={Math.random() * 200} triggerKey={refreshKey} />
+                {/* Folder Name Stable unless Global Refresh */}
+                <Typewriter text={folder.name} speed={15} triggerKey={refreshKey} />
              </span>
              {!folder.isExpanded && <span className="text-[10px] opacity-40 font-mono ml-1">[{folder.notes.length}]</span>}
            </div>
@@ -261,8 +276,8 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
                  <div className="flex items-center justify-between p-1.5 pl-3 border-b border-transparent hover:border-current hover:border-opacity-10">
                     <div className="flex-1 cursor-pointer overflow-hidden flash-active" onClick={() => onOpenNote(note)}>
                        <span className="text-[10px] font-bold truncate block hover:underline font-mono">
-                          {/* Note Title inside Folder types on MOUNT (because folder just expanded) */}
-                          <Typewriter text={note.title} speed={10} delay={50} />
+                          {/* Note Title Inside Folder: Triggered by Folder Expand (Mount) */}
+                          <Typewriter text={note.title} speed={10} />
                        </span>
                     </div>
                     <div className="flex gap-1 pl-2">
@@ -273,7 +288,7 @@ const FolderCard = ({ folder, isTerminal, onToggle, onDelete, onMoveNote, onDele
                  {/* PEEK INSIDE FOLDER */}
                  {note.isPeeked && (
                    <div className={`mx-2 mb-2 mt-1 pl-2 py-1 border-l-2 text-[9px] font-mono whitespace-pre-wrap ${isTerminal ? 'border-[#3fb950] text-[#e6edf3]' : 'border-blue-500 text-gray-900'}`}>
-                     <Typewriter text={getPeekContent(note.content)} speed={5} />
+                     <Typewriter text={getPeekContent(note.content)} speed={5} triggerKey={note.isPeeked} />
                    </div>
                  )}
                  <button onClick={() => onPeekNote(note.id)} className="w-full py-0.5 bg-black/5 hover:bg-black/10 text-[8px] text-center opacity-40 uppercase tracking-widest hover:opacity-100 transition-opacity flash-active">
@@ -389,20 +404,20 @@ export default function DesnoteAppV7() {
   // --- ACTIONS ---
   const toggleTheme = () => {
       setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-      setRefreshKey(prev => prev + 1); // GLOBAL REFRESH (Retype everything)
+      setRefreshKey(prev => prev + 1); // GLOBAL REFRESH
   };
 
   const toggleViewMode = (mode) => {
     if (viewMode === mode) setViewMode('ALL');
     else setViewMode(mode);
-    setRefreshKey(prev => prev + 1); // GLOBAL REFRESH (Retype everything)
+    setRefreshKey(prev => prev + 1); // GLOBAL REFRESH
   };
 
   const toggleFolder = (folderId) => {
     setFolders(folders.map(f => 
       f.id === folderId ? { ...f, isExpanded: !f.isExpanded } : f
     ));
-    // NO refreshKey update here -> Local action only
+    // NO refreshKey update here
   };
 
   const togglePeek = (folderId, noteId) => {
@@ -417,7 +432,7 @@ export default function DesnoteAppV7() {
         };
       }));
     }
-    // NO refreshKey update here -> Local action only
+    // NO refreshKey update here
   };
 
   const handleCreate = (name) => {
@@ -496,7 +511,6 @@ export default function DesnoteAppV7() {
       setFolders(prev => prev.map(f => f.id === targetId ? { ...f, notes: [...f.notes, noteToMove] } : f));
     }
     setMoveModal({ isOpen: false, noteId: null, sourceId: null, isFromRoot: false });
-    // NO Refresh key -> let user see the item disappear/appear naturally
   };
 
   // --- IMPORT/EXPORT ---
@@ -525,7 +539,7 @@ export default function DesnoteAppV7() {
           setFolders(data.folders);
           setRootNotes(data.rootNotes);
           setSettingsOpen(false);
-          setRefreshKey(prev => prev + 1); // GLOBAL REFRESH on Import
+          setRefreshKey(prev => prev + 1);
         }
       } catch (err) { alert("Failed to read file."); }
     };
@@ -589,7 +603,7 @@ export default function DesnoteAppV7() {
         <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
                 {isTerminal ? <Terminal className="text-[#e6edf3]" size={18} /> : <Github className="text-black" size={18} />}
-                <h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v7.7</span></h1>
+                <h1 className="text-lg font-bold tracking-tight">DESNOTE <span className="text-[10px] font-normal opacity-50 ml-1 border px-1 rounded-sm">v7.8</span></h1>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => setSettingsOpen(true)} className="p-1.5 rounded-md hover:bg-current hover:bg-opacity-10 transition-colors flash-active">
